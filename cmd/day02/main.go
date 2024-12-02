@@ -32,10 +32,14 @@ func parseReport(line string) report {
 	return report
 }
 
+func unsafe(diff int) bool {
+	return diff < 1 || diff > 3
+}
+
 func (r report) isAscending() bool {
 	for i := range len(r) - 1 {
 		diff := r[i+1] - r[i]
-		if diff < 1 || diff > 3 {
+		if unsafe(diff) {
 			return false
 		}
 	}
@@ -45,7 +49,7 @@ func (r report) isAscending() bool {
 func (r report) isDescending() bool {
 	for i := range len(r) - 1 {
 		diff := r[i] - r[i+1]
-		if diff < 1 || diff > 3 {
+		if unsafe(diff) {
 			return false
 		}
 	}
