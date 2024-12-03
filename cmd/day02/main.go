@@ -52,7 +52,7 @@ func (r report) isSafe() bool {
 }
 
 func (r report) isAlmostSafe() bool {
-	for i := range len(r) {
+	for i := range r {
 		d := slices.Concat(r[:i], r[i+1:])
 		if d.isSafe() {
 			return true
