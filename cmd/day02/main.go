@@ -32,24 +32,15 @@ func parseReport(line string) report {
 	return report
 }
 
-func unsafe(diff int) bool {
-	return diff < 1 || diff > 3
+func (r report) reverse() report {
+	slices.Reverse(r)
+	return r
 }
 
 func (r report) isAscending() bool {
 	for i := range len(r) - 1 {
 		diff := r[i+1] - r[i]
-		if unsafe(diff) {
-			return false
-		}
-	}
-	return true
-}
-
-func (r report) isDescending() bool {
-	for i := range len(r) - 1 {
-		diff := r[i] - r[i+1]
-		if unsafe(diff) {
+		if diff < 1 || diff > 3 {
 			return false
 		}
 	}
@@ -57,7 +48,7 @@ func (r report) isDescending() bool {
 }
 
 func (r report) isSafe() bool {
-	return r.isAscending() || r.isDescending()
+	return r.isAscending() || r.reverse().isAscending()
 }
 
 func (r report) isAlmostSafe() bool {
