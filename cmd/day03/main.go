@@ -15,7 +15,7 @@ type Day03 struct {
 
 var (
 	mulRE     = regexp.MustCompile(`mul\((\d{1,3}),(\d{1,3})\)`)
-	enabledRE = regexp.MustCompile(`(?s)do\(\)(.*?)don't\(\)`)
+	enabledRE = regexp.MustCompile(`(?s)do\(\).*?don't\(\)`)
 )
 
 func NewDay03(inputFile string) Day03 {
@@ -43,12 +43,12 @@ func (d Day03) Part1() int {
 
 func (d Day03) Part2() int {
 	input, _ := d.ReadFile()
-	enabledMuls := enabledRE.FindAllStringSubmatch("do()"+string(input)+"don't()", -1)
+	enabledMuls := enabledRE.FindAllString("do()"+string(input)+"don't()", -1)
 
 	result := 0
 
 	for _, muls := range enabledMuls {
-		result += sumMuls(muls[1])
+		result += sumMuls(muls)
 	}
 
 	return result
