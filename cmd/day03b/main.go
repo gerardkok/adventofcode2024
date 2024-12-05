@@ -60,7 +60,7 @@ func splitAtClosingBracket(data []byte, atEOF bool) (advance int, token []byte, 
 	}
 
 	// Find next separator and return token.
-	if i := bytes.IndexByte(data, byte(')')); i >= 0 {
+	if i := bytes.IndexByte(data, ')'); i >= 0 {
 		return i + 1, data[:i+1], nil
 	}
 
