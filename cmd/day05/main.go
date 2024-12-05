@@ -52,7 +52,7 @@ func parsePages(lines []string) []page {
 	return result
 }
 
-func cmpUnderRules(rules rules) func(a, b int) int {
+func cmp(rules rules) func(a, b int) int {
 	return func(a, b int) int {
 		if _, ok := rules[a][b]; ok {
 			return -1
@@ -69,11 +69,11 @@ func (p page) middle() int {
 }
 
 func (p page) isSorted(rules rules) bool {
-	return slices.IsSortedFunc(p, cmpUnderRules(rules))
+	return slices.IsSortedFunc(p, cmp(rules))
 }
 
 func (p page) sort(rules rules) {
-	slices.SortFunc(p, cmpUnderRules(rules))
+	slices.SortFunc(p, cmp(rules))
 }
 
 func parseInput(lines []string) (rules, []page) {
