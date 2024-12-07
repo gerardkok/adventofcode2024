@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -14,12 +13,14 @@ type Day07 struct {
 	day.DayInput
 }
 
+type operator func(int, int) int
+
 func NewDay07(inputFile string) Day07 {
 	return Day07{day.DayInput(inputFile)}
 }
 
 func parseLine(line string) (int, []int) {
-	r, o, _ := strings.Cut(line, ":")
+	r, o, _ := strings.Cut(line, ": ")
 	result, _ := strconv.Atoi(r)
 
 	ops := strings.Split(o, " ")
@@ -34,32 +35,38 @@ func parseLine(line string) (int, []int) {
 	return result, operands
 }
 
-func doublePipe(a, b int) int {
-	r, _ := strconv.Atoi(fmt.Sprintf("%d%d", a, b))
-	return r
+func add(a, b int) int {
+	return a + b
 }
 
-func isValid(result, intermediate int, operands []int) bool {
-	if len(operands) == 0 {
-		return result == intermediate
-	}
-
-	operand := operands[0]
-	remaining := operands[1:]
-	return isValid(result, intermediate+operand, remaining) ||
-		isValid(result, intermediate*operand, remaining)
+func mul(a, b int) int {
+	return a * b
 }
 
-func isValidPart2(result, intermediate int, operands []int) bool {
+func concat(a, b int) int {
+	pow := 10
+	for b >= pow {
+		pow *= 10
+	}
+	return a*pow + b
+}
+
+func valid(target, intermediate int, operands []int, operators []operator) bool {
 	if len(operands) == 0 {
-		return result == intermediate
+		return target == intermediate
 	}
 
-	operand := operands[0]
-	remaining := operands[1:]
-	return isValidPart2(result, intermediate+operand, remaining) ||
-		isValidPart2(result, intermediate*operand, remaining) ||
-		isValidPart2(result, doublePipe(intermediate, operand), remaining)
+	if intermediate > target {
+		return false
+	}
+
+	op, remaining := operands[0], operands[1:]
+	for _, operator := range operators {
+		if valid(target, operator(intermediate, op), remaining, operators) {
+			return true
+		}
+	}
+	return false
 }
 
 func (d Day07) Part1() int {
@@ -68,9 +75,9 @@ func (d Day07) Part1() int {
 	sum := 0
 
 	for _, line := range lines {
-		result, operands := parseLine(line)
-		if isValid(result, 0, operands) {
-			sum += result
+		target, operands := parseLine(line)
+		if valid(target, operands[0], operands[1:], []operator{add, mul}) {
+			sum += target
 		}
 	}
 
@@ -83,9 +90,9 @@ func (d Day07) Part2() int {
 	sum := 0
 
 	for _, line := range lines {
-		result, operands := parseLine(line)
-		if isValidPart2(result, 0, operands) {
-			sum += result
+		target, operands := parseLine(line)
+		if valid(target, operands[0], operands[1:], []operator{add, mul, concat}) {
+			sum += target
 		}
 	}
 
