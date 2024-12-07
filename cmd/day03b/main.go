@@ -22,7 +22,7 @@ func parseNumberBackwards(data []byte, startAt int) (int, int) {
 	result := 0
 
 	pow := 1
-	for i := startAt; i >= 0 && i >= startAt-3; i-- {
+	for i := startAt; i >= max(0, startAt-3); i-- {
 		c := data[i]
 		if c < '0' || c > '9' {
 			return result, i

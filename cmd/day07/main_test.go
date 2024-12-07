@@ -28,3 +28,13 @@ func TestExamplePart2(t *testing.T) {
 		t.Errorf("want %d, got %d", want, got)
 	}
 }
+
+func TestConcat(t *testing.T) {
+	t.Parallel()
+
+	want := 10
+	got := concat(1, 0)
+	if want != got {
+		t.Errorf("want %d, got %d", want, got)
+	}
+}
