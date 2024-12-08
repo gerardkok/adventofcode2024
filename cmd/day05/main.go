@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
-	"strconv"
 	"strings"
 
+	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
 )
 
@@ -33,8 +33,8 @@ func parseRules(lines []string) rules {
 
 	for _, line := range lines {
 		s, t, _ := strings.Cut(line, "|")
-		x, _ := strconv.Atoi(s)
-		y, _ := strconv.Atoi(t)
+		x := conv.MustAtoi(s)
+		y := conv.MustAtoi(t)
 		if _, ok := result[x]; !ok {
 			result[x] = make(map[int]struct{})
 		}
@@ -50,8 +50,7 @@ func parsePages(lines []string) []page {
 	for i, line := range lines {
 		r := strings.Split(line, ",")
 		for _, p := range r {
-			q, _ := strconv.Atoi(p)
-			result[i] = append(result[i], q)
+			result[i] = append(result[i], conv.MustAtoi(p))
 		}
 	}
 

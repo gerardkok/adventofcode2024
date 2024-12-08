@@ -4,9 +4,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 
+	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
 )
 
@@ -27,15 +27,14 @@ func NewDay07(opts ...day.Option) day07 {
 
 func parseLine(line string) (int, []int) {
 	r, o, _ := strings.Cut(line, ": ")
-	result, _ := strconv.Atoi(r)
+	result := conv.MustAtoi(r)
 
 	ops := strings.Split(o, " ")
 
 	operands := make([]int, len(ops))
 
 	for i, op := range ops {
-		p, _ := strconv.Atoi(op)
-		operands[i] = p
+		operands[i] = conv.MustAtoi(op)
 	}
 
 	return result, operands

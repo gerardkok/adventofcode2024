@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
-	"strconv"
 	"strings"
 
+	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
 )
 
@@ -33,9 +33,8 @@ func abs(num int) int {
 
 func readLine(line string) (int, int) {
 	fields := strings.Fields(line)
-	left, _ := strconv.Atoi(fields[0])
-	right, _ := strconv.Atoi(fields[1])
-	return left, right
+
+	return conv.MustAtoi(fields[0]), conv.MustAtoi(fields[1])
 }
 
 func parseInput(lines []string) ([]int, []int) {
