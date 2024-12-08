@@ -1,15 +1,13 @@
 package main
 
 import (
-	"path/filepath"
+	"adventofcode2024/internal/day"
 	"testing"
-
-	"adventofcode2024/internal/projectpath"
 )
 
 func TestExamplePart1(t *testing.T) {
 	t.Parallel()
-	d := NewDay01(filepath.Join(projectpath.Root, "cmd", "day01", "example.txt"))
+	d := NewDay01(day.WithInput("example.txt"))
 
 	want := 11
 	got := d.Part1()
@@ -20,7 +18,7 @@ func TestExamplePart1(t *testing.T) {
 
 func TestExamplePart2(t *testing.T) {
 	t.Parallel()
-	d := NewDay01(filepath.Join(projectpath.Root, "cmd", "day01", "example.txt"))
+	d := NewDay01(day.WithInput("example.txt"))
 
 	want := 31
 	got := d.Part2()

@@ -1,22 +1,28 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
 	"adventofcode2024/internal/day"
-	"adventofcode2024/internal/projectpath"
 )
 
-type Day07 struct {
+var (
+	_, caller, _, _ = runtime.Caller(0)
+	path            = filepath.Dir(caller)
+)
+
+type day07 struct {
 	day.DayInput
 }
 
 type operator func(int, int) int
 
-func NewDay07(inputFile string) Day07 {
-	return Day07{day.DayInput(inputFile)}
+func NewDay07(opts ...day.Option) day07 {
+	return day07{day.NewDayInput(path, opts...)}
 }
 
 func parseLine(line string) (int, []int) {
@@ -69,8 +75,8 @@ func valid(target, intermediate int, operands []int, operators []operator) bool 
 	return false
 }
 
-func (d Day07) Part1() int {
-	lines, _ := d.ReadLines()
+func (d day07) Part1() int {
+	lines := d.ReadLines()
 
 	sum := 0
 
@@ -84,8 +90,8 @@ func (d Day07) Part1() int {
 	return sum
 }
 
-func (d Day07) Part2() int {
-	lines, _ := d.ReadLines()
+func (d day07) Part2() int {
+	lines := d.ReadLines()
 
 	sum := 0
 
@@ -100,7 +106,7 @@ func (d Day07) Part2() int {
 }
 
 func main() {
-	d := NewDay07(filepath.Join(projectpath.Root, "cmd", "day07", "input.txt"))
+	d := NewDay07(day.FromArgs(os.Args[1:]))
 
 	day.Solve(d)
 }

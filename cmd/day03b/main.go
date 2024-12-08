@@ -3,19 +3,25 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"adventofcode2024/internal/day"
-	"adventofcode2024/internal/projectpath"
 )
 
-type Day03b struct {
+var (
+	_, caller, _, _ = runtime.Caller(0)
+	path            = filepath.Dir(caller)
+)
+
+type day03b struct {
 	day.DayInput
 }
 
-func NewDay03b(inputFile string) Day03b {
-	return Day03b{day.DayInput(inputFile)}
+func NewDay03b(opts ...day.Option) day03b {
+	return day03b{day.NewDayInput(path, opts...)}
 }
 
 func parseNumberBackwards(data []byte, startAt int) (int, int) {
@@ -73,8 +79,11 @@ func splitAtClosingBracket(data []byte, atEOF bool) (advance int, token []byte, 
 	return 0, nil, nil
 }
 
-func (d Day03b) Part1() int {
-	file, _ := os.Open(string(d.DayInput))
+func (d day03b) Part1() int {
+	file, err := os.Open(d.Input)
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
@@ -91,8 +100,11 @@ func (d Day03b) Part1() int {
 	return sum
 }
 
-func (d Day03b) Part2() int {
-	file, _ := os.Open(string(d.DayInput))
+func (d day03b) Part2() int {
+	file, err := os.Open(d.Input)
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
@@ -118,7 +130,7 @@ func (d Day03b) Part2() int {
 }
 
 func main() {
-	d := NewDay03b(filepath.Join(projectpath.Root, "cmd", "day03b", "input.txt"))
+	d := NewDay03b(day.FromArgs(os.Args[1:]))
 
 	day.Solve(d)
 }

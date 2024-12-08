@@ -1,16 +1,22 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
 
 	"adventofcode2024/internal/day"
-	"adventofcode2024/internal/projectpath"
 )
 
-type Day05 struct {
+var (
+	_, caller, _, _ = runtime.Caller(0)
+	path            = filepath.Dir(caller)
+)
+
+type day05 struct {
 	day.DayInput
 }
 
@@ -18,8 +24,8 @@ type rules map[int]map[int]struct{}
 
 type page []int
 
-func NewDay05(inputFile string) Day05 {
-	return Day05{day.DayInput(inputFile)}
+func NewDay05(opts ...day.Option) day05 {
+	return day05{day.NewDayInput(path, opts...)}
 }
 
 func parseRules(lines []string) rules {
@@ -94,8 +100,8 @@ func parseInput(lines []string) (rules, []page) {
 	return r, p
 }
 
-func (d Day05) Part1() int {
-	lines, _ := d.ReadLines()
+func (d day05) Part1() int {
+	lines := d.ReadLines()
 	rules, pages := parseInput(lines)
 
 	sum := 0
@@ -109,8 +115,8 @@ func (d Day05) Part1() int {
 	return sum
 }
 
-func (d Day05) Part2() int {
-	lines, _ := d.ReadLines()
+func (d day05) Part2() int {
+	lines := d.ReadLines()
 	rules, pages := parseInput(lines)
 
 	sum := 0
@@ -126,7 +132,7 @@ func (d Day05) Part2() int {
 }
 
 func main() {
-	d := NewDay05(filepath.Join(projectpath.Root, "cmd", "day05", "input.txt"))
+	d := NewDay05(day.FromArgs(os.Args[1:]))
 
 	day.Solve(d)
 }

@@ -2,14 +2,20 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"adventofcode2024/internal/day"
-	"adventofcode2024/internal/projectpath"
 )
 
-type Day04 struct {
+var (
+	_, caller, _, _ = runtime.Caller(0)
+	path            = filepath.Dir(caller)
+)
+
+type day04 struct {
 	day.DayInput
 }
 
@@ -30,8 +36,8 @@ var directions = []direction{
 	{-1, 1},  // northeast
 }
 
-func NewDay04(inputFile string) Day04 {
-	return Day04{day.DayInput(inputFile)}
+func NewDay04(opts ...day.Option) day04 {
+	return day04{day.NewDayInput(path, opts...)}
 }
 
 func (w wordSearch) isMAS(r, c int, dir direction) bool {
@@ -83,8 +89,8 @@ func makeWordSearch(input []string) wordSearch {
 	return result
 }
 
-func (d Day04) Part1() int {
-	lines, _ := d.ReadLines()
+func (d day04) Part1() int {
+	lines := d.ReadLines()
 	w := makeWordSearch(lines)
 
 	xmas := 0
@@ -98,8 +104,8 @@ func (d Day04) Part1() int {
 	return xmas
 }
 
-func (d Day04) Part2() int {
-	lines, _ := d.ReadLines()
+func (d day04) Part2() int {
+	lines := d.ReadLines()
 	w := makeWordSearch(lines)
 
 	xmas := 0
@@ -116,7 +122,7 @@ func (d Day04) Part2() int {
 }
 
 func main() {
-	d := NewDay04(filepath.Join(projectpath.Root, "cmd", "day04", "input.txt"))
+	d := NewDay04(day.FromArgs(os.Args[1:]))
 
 	day.Solve(d)
 }

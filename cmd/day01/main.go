@@ -1,21 +1,27 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 
 	"adventofcode2024/internal/day"
-	"adventofcode2024/internal/projectpath"
 )
 
-type Day01 struct {
+var (
+	_, caller, _, _ = runtime.Caller(0)
+	path            = filepath.Dir(caller)
+)
+
+type day01 struct {
 	day.DayInput
 }
 
-func NewDay01(inputFile string) Day01 {
-	return Day01{day.DayInput(inputFile)}
+func NewDay01(opts ...day.Option) day01 {
+	return day01{day.NewDayInput(path, opts...)}
 }
 
 func abs(num int) int {
@@ -54,8 +60,8 @@ func histogram(list []int) map[int]int {
 	return result
 }
 
-func (d Day01) Part1() int {
-	lines, _ := d.ReadLines()
+func (d day01) Part1() int {
+	lines := d.ReadLines()
 
 	left, right := parseInput(lines)
 
@@ -71,8 +77,8 @@ func (d Day01) Part1() int {
 	return sum
 }
 
-func (d Day01) Part2() int {
-	lines, _ := d.ReadLines()
+func (d day01) Part2() int {
+	lines := d.ReadLines()
 
 	l, r := parseInput(lines)
 
@@ -89,7 +95,7 @@ func (d Day01) Part2() int {
 }
 
 func main() {
-	d := NewDay01(filepath.Join(projectpath.Root, "cmd", "day01", "input.txt"))
+	d := NewDay01(day.FromArgs(os.Args[1:]))
 
 	day.Solve(d)
 }
