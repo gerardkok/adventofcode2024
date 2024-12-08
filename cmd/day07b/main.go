@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
@@ -91,16 +93,25 @@ func valid(target int, operands []int, operators []operator) bool {
 func (d day07b) sumValid(operators []operator) int {
 	lines := d.ReadLines()
 
-	sum := 0
+	var sum atomic.Int64
+
+	var wg sync.WaitGroup
 
 	for _, line := range lines {
-		target, operands := parseLine(line)
-		if valid(target, operands, operators) {
-			sum += target
-		}
+		wg.Add(1)
+
+		go func() {
+			target, operands := parseLine(line)
+			if valid(target, operands, operators) {
+				sum.Add(int64(target))
+			}
+			wg.Done()
+		}()
 	}
 
-	return sum
+	wg.Wait()
+
+	return int(sum.Load())
 }
 
 func (d day07b) Part1() int {
