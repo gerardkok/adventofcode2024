@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
-	"strconv"
 	"strings"
 
+	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
 )
 
@@ -31,8 +31,7 @@ func parseReport(line string) report {
 	report := make(report, len(fields))
 
 	for i, f := range fields {
-		level, _ := strconv.Atoi(f)
-		report[i] = level
+		report[i] = conv.MustAtoi(f)
 	}
 
 	return report
@@ -53,8 +52,12 @@ func (r report) isAscending() bool {
 	return true
 }
 
+func (r report) isDescending() bool {
+	return r.reverse().isAscending()
+}
+
 func (r report) isSafe() bool {
-	return r.isAscending() || r.reverse().isAscending()
+	return r.isAscending() || r.isDescending()
 }
 
 func (r report) isAlmostSafe() bool {

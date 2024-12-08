@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strconv"
 
+	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
 )
 
@@ -31,9 +31,7 @@ func sumMuls(s string) int {
 
 	muls := mulRE.FindAllStringSubmatch(s, -1)
 	for _, mul := range muls {
-		left, _ := strconv.Atoi(mul[1])
-		right, _ := strconv.Atoi(mul[2])
-		result += left * right
+		result += conv.MustAtoi(mul[1]) * conv.MustAtoi(mul[2])
 	}
 
 	return result

@@ -4,9 +4,11 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 
+	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
 )
 
@@ -27,15 +29,14 @@ func NewDay07b(opts ...day.Option) day07b {
 
 func parseLine(line string) (int, []int) {
 	r, o, _ := strings.Cut(line, ": ")
-	result, _ := strconv.Atoi(r)
+	result := conv.MustAtoi(r)
 
 	ops := strings.Split(o, " ")
 
 	operands := make([]int, len(ops))
 
 	for i, op := range ops {
-		p, _ := strconv.Atoi(op)
-		operands[i] = p
+		operands[i] = conv.MustAtoi(op)
 	}
 
 	return result, operands
@@ -89,34 +90,36 @@ func valid(target int, operands []int, operators []operator) bool {
 	return false
 }
 
-func (d day07b) Part1() int {
+func (d day07b) sumValid(operators []operator) int {
 	lines := d.ReadLines()
 
-	sum := 0
+	var sum atomic.Int64
+
+	var wg sync.WaitGroup
 
 	for _, line := range lines {
-		target, operands := parseLine(line)
-		if valid(target, operands, []operator{sub, div}) {
-			sum += target
-		}
+		wg.Add(1)
+
+		go func() {
+			target, operands := parseLine(line)
+			if valid(target, operands, operators) {
+				sum.Add(int64(target))
+			}
+			wg.Done()
+		}()
 	}
 
-	return sum
+	wg.Wait()
+
+	return int(sum.Load())
+}
+
+func (d day07b) Part1() int {
+	return d.sumValid([]operator{sub, div})
 }
 
 func (d day07b) Part2() int {
-	lines := d.ReadLines()
-
-	sum := 0
-
-	for _, line := range lines {
-		target, operands := parseLine(line)
-		if valid(target, operands, []operator{sub, div, trimSuffix}) {
-			sum += target
-		}
-	}
-
-	return sum
+	return d.sumValid([]operator{sub, div, trimSuffix})
 }
 
 func main() {
