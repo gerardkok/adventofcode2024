@@ -2,22 +2,28 @@ package day
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
 )
 
 type Day interface {
-	ReadLines() ([]string, error)
 	Part1() int
 	Part2() int
 }
 
-type DayInput string
+type DayInput struct {
+	Input string
+}
 
-func (d DayInput) ReadLines() ([]string, error) {
-	file, err := os.Open(string(d))
+type Option func(*DayInput)
+
+func (d DayInput) ReadLines() []string {
+	file, err := os.Open(d.Input)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 	defer file.Close()
 
@@ -29,14 +35,48 @@ func (d DayInput) ReadLines() ([]string, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
-	return result, nil
+	return result
 }
 
-func (d DayInput) ReadFile() ([]byte, error) {
-	return os.ReadFile(string(d))
+func (d DayInput) ReadInput() []byte {
+	input, err := os.ReadFile(d.Input)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return input
+}
+
+func NewDayInput(path string, opts ...Option) DayInput {
+	d := DayInput{
+		Input: filepath.Join(path, "input.txt"),
+	}
+	for _, opt := range opts {
+		opt(&d)
+	}
+	return d
+}
+
+func FromArgs(args []string) Option {
+	return func(d *DayInput) {
+		fset := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+		fset.StringVar(&d.Input, "i", d.Input, "input file")
+		if err := fset.Parse(args); err != nil {
+			if err == flag.ErrHelp {
+				os.Exit(0)
+			}
+			log.Fatal(err)
+		}
+	}
+}
+
+func WithInput(input string) Option {
+	return func(d *DayInput) {
+		d.Input = input
+	}
 }
 
 func Solve(p Day) {

@@ -1,23 +1,29 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
 
 	"adventofcode2024/internal/day"
-	"adventofcode2024/internal/projectpath"
 )
 
-type Day02 struct {
+var (
+	_, caller, _, _ = runtime.Caller(0)
+	path            = filepath.Dir(caller)
+)
+
+type day02 struct {
 	day.DayInput
 }
 
 type report []int
 
-func NewDay02(inputFile string) Day02 {
-	return Day02{day.DayInput(inputFile)}
+func NewDay02(opts ...day.Option) day02 {
+	return day02{day.NewDayInput(path, opts...)}
 }
 
 func parseReport(line string) report {
@@ -61,8 +67,8 @@ func (r report) isAlmostSafe() bool {
 	return false
 }
 
-func (d Day02) Part1() int {
-	lines, _ := d.ReadLines()
+func (d day02) Part1() int {
+	lines := d.ReadLines()
 
 	safe := 0
 
@@ -76,8 +82,8 @@ func (d Day02) Part1() int {
 	return safe
 }
 
-func (d Day02) Part2() int {
-	lines, _ := d.ReadLines()
+func (d day02) Part2() int {
+	lines := d.ReadLines()
 
 	safe := 0
 
@@ -92,7 +98,7 @@ func (d Day02) Part2() int {
 }
 
 func main() {
-	d := NewDay02(filepath.Join(projectpath.Root, "cmd", "day02", "input.txt"))
+	d := NewDay02(day.FromArgs(os.Args[1:]))
 
 	day.Solve(d)
 }

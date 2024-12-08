@@ -1,25 +1,29 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 
 	"adventofcode2024/internal/day"
-	"adventofcode2024/internal/projectpath"
 )
 
-type Day03 struct {
-	day.DayInput
-}
-
 var (
+	_, caller, _, _ = runtime.Caller(0)
+	path            = filepath.Dir(caller)
+
 	mulRE     = regexp.MustCompile(`mul\((\d{1,3}),(\d{1,3})\)`)
 	enabledRE = regexp.MustCompile(`(?s)do\(\).*?don't\(\)`)
 )
 
-func NewDay03(inputFile string) Day03 {
-	return Day03{day.DayInput(inputFile)}
+type day03 struct {
+	day.DayInput
+}
+
+func NewDay03(opts ...day.Option) day03 {
+	return day03{day.NewDayInput(path, opts...)}
 }
 
 func sumMuls(s string) int {
@@ -35,14 +39,14 @@ func sumMuls(s string) int {
 	return result
 }
 
-func (d Day03) Part1() int {
-	input, _ := d.ReadFile()
+func (d day03) Part1() int {
+	input := d.ReadInput()
 
 	return sumMuls(string(input))
 }
 
-func (d Day03) Part2() int {
-	input, _ := d.ReadFile()
+func (d day03) Part2() int {
+	input := d.ReadInput()
 	enabledMuls := enabledRE.FindAllString("do()"+string(input)+"don't()", -1)
 
 	result := 0
@@ -55,7 +59,7 @@ func (d Day03) Part2() int {
 }
 
 func main() {
-	d := NewDay03(filepath.Join(projectpath.Root, "cmd", "day03", "input.txt"))
+	d := NewDay03(day.FromArgs(os.Args[1:]))
 
 	day.Solve(d)
 }

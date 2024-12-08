@@ -2,18 +2,24 @@ package main
 
 import (
 	"maps"
+	"os"
 	"path/filepath"
+	"runtime"
 
 	"adventofcode2024/internal/day"
-	"adventofcode2024/internal/projectpath"
 )
 
-type Day08 struct {
+var (
+	_, caller, _, _ = runtime.Caller(0)
+	path            = filepath.Dir(caller)
+)
+
+type day08 struct {
 	day.DayInput
 }
 
-func NewDay08(inputFile string) Day08 {
-	return Day08{day.DayInput(inputFile)}
+func NewDay08(opts ...day.Option) day08 {
+	return day08{day.NewDayInput(path, opts...)}
 }
 
 type location [2]int
@@ -103,8 +109,8 @@ func (c city) antinodes(antinodes antinodesFn) map[location]struct{} {
 	return result
 }
 
-func (d Day08) Part1() int {
-	lines, _ := d.ReadLines()
+func (d day08) Part1() int {
+	lines := d.ReadLines()
 
 	city := parseCity(lines)
 
@@ -113,8 +119,8 @@ func (d Day08) Part1() int {
 	return len(antinodes)
 }
 
-func (d Day08) Part2() int {
-	lines, _ := d.ReadLines()
+func (d day08) Part2() int {
+	lines := d.ReadLines()
 
 	city := parseCity(lines)
 
@@ -124,7 +130,7 @@ func (d Day08) Part2() int {
 }
 
 func main() {
-	d := NewDay08(filepath.Join(projectpath.Root, "cmd", "day08", "input.txt"))
+	d := NewDay08(day.FromArgs(os.Args[1:]))
 
 	day.Solve(d)
 }

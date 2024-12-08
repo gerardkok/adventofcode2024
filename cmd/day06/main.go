@@ -2,14 +2,20 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"adventofcode2024/internal/day"
-	"adventofcode2024/internal/projectpath"
 )
 
-type Day06 struct {
+var (
+	_, caller, _, _ = runtime.Caller(0)
+	path            = filepath.Dir(caller)
+)
+
+type day06 struct {
 	day.DayInput
 }
 
@@ -31,8 +37,8 @@ var (
 	}
 )
 
-func NewDay06(inputFile string) Day06 {
-	return Day06{day.DayInput(inputFile)}
+func NewDay06(opts ...day.Option) day06 {
+	return day06{day.NewDayInput(path, opts...)}
 }
 
 func (p *position) rotate() {
@@ -113,8 +119,8 @@ func (p position) loop(m patrolMap) bool {
 	return false
 }
 
-func (d Day06) Part1() int {
-	lines, _ := d.ReadLines()
+func (d day06) Part1() int {
+	lines := d.ReadLines()
 
 	patrolMap, guard := parsePatrolMap(lines)
 
@@ -123,8 +129,8 @@ func (d Day06) Part1() int {
 	return len(visited)
 }
 
-func (d Day06) Part2() int {
-	lines, _ := d.ReadLines()
+func (d day06) Part2() int {
+	lines := d.ReadLines()
 
 	patrolMap, guard := parsePatrolMap(lines)
 
@@ -145,7 +151,7 @@ func (d Day06) Part2() int {
 }
 
 func main() {
-	d := NewDay06(filepath.Join(projectpath.Root, "cmd", "day06", "input.txt"))
+	d := NewDay06(day.FromArgs(os.Args[1:]))
 
 	day.Solve(d)
 }
