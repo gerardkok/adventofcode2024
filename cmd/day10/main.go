@@ -105,9 +105,7 @@ func (g grid) peaks(trailhead position) int {
 			result++
 		}
 
-		for neighbour := range g.neighbours(p) {
-			todo = append(todo, neighbour)
-		}
+		todo = slices.AppendSeq(todo, g.neighbours(p))
 	}
 
 	return result
