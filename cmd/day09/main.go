@@ -26,7 +26,6 @@ type block struct {
 
 type file struct {
 	start, length int
-	id            int
 }
 
 type disk struct {
@@ -62,7 +61,7 @@ func parseInput(input []byte) disk {
 		id := id(i)
 		free := isFree(i)
 		length := int(c - '0')
-		f := file{len(blocks), length, id}
+		f := file{len(blocks), length}
 		if free {
 			freeSpace = append(freeSpace, f)
 		} else {

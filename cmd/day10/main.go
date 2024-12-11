@@ -1,7 +1,6 @@
 package main
 
 import (
-	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -19,11 +18,15 @@ type day10 struct {
 	day.DayInput
 }
 
-type grid [][]int
+type grid [][]byte
 
-type position [2]int
+type position struct {
+	x, y int
+}
 
-type direction [2]int
+type direction struct {
+	dx, dy int
+}
 
 var directions = []direction{{0, 1}, {1, 0}, {-1, 0}, {0, -1}}
 
@@ -31,54 +34,90 @@ func NewDay10(opts ...day.Option) day10 {
 	return day10{day.NewDayInput(path, opts...)}
 }
 
+func (p position) to(d direction) position {
+	return position{p.x + d.dx, p.y + d.dy}
+}
+
 func parseGrid(input []string) grid {
 	result := make(grid, len(input)+2)
-	result[0] = slices.Repeat([]int{-1}, len(input[0])+2)
-	result[len(input)+1] = slices.Repeat([]int{-1}, len(input[0])+2)
+	result[0] = slices.Repeat([]byte{'#'}, len(input[0])+2)
+	result[len(input)+1] = slices.Repeat([]byte{'#'}, len(input[0])+2)
 	for x, line := range input {
-		result[x+1] = slices.Repeat([]int{-1}, len(input[0])+2)
-		for y, c := range line {
-			result[x+1][y+1] = int(c - '0')
-		}
+		result[x+1] = []byte("#" + line + "#")
 	}
 	return result
 }
 
-func (g grid) height(p position) int {
-	return g[p[0]][p[1]]
+func (g grid) height(p position) byte {
+	return g[p.x][p.y]
 }
 
-func (g grid) nTrails(p position) map[position]int {
-	if g.height(p) == 9 {
-		return map[position]int{p: 1}
-	}
+func (g grid) trailhead(p position) bool {
+	return g.height(p) == '0'
+}
 
-	result := make(map[position]int)
+func (g grid) peak(p position) bool {
+	return g.height(p) == '9'
+}
+
+func (g grid) walkNeighbours(p position, fn func(position)) {
 	for _, dir := range directions {
-		next := position{p[0] + dir[0], p[1] + dir[1]}
+		next := p.to(dir)
 		if g.height(next) == g.height(p)+1 {
-			n := g.nTrails(next)
-			maps.Copy(result, n)
+			fn(next)
 		}
+	}
+}
+
+func (g grid) peaks(trailhead position) int {
+	todo := []position{trailhead}
+	seen := make(map[position]struct{})
+
+	result := 0
+
+	for len(todo) > 0 {
+		p := todo[0]
+		todo = todo[1:]
+
+		if _, ok := seen[p]; ok {
+			continue
+		}
+
+		seen[p] = struct{}{}
+
+		if g.peak(p) {
+			result++
+		}
+
+		g.walkNeighbours(p, func(n position) {
+			todo = append(todo, n)
+		})
 	}
 
 	return result
 }
 
 func (g grid) rating(p position) int {
-	if g.height(p) == 9 {
+	if g.peak(p) {
 		return 1
 	}
 
 	result := 0
-	for _, dir := range directions {
-		next := position{p[0] + dir[0], p[1] + dir[1]}
-		if g.height(next) == g.height(p)+1 {
-			result += g.rating(next)
-		}
-	}
+
+	g.walkNeighbours(p, func(n position) {
+		result += g.rating(n)
+	})
 
 	return result
+}
+
+func (g grid) walk(fn func(position)) {
+	for x := range len(g) {
+		for y := range len(g[0]) {
+			p := position{x, y}
+			fn(p)
+		}
+	}
 }
 
 func (d day10) Part1() int {
@@ -88,15 +127,11 @@ func (d day10) Part1() int {
 
 	result := 0
 
-	for x := range len(grid) {
-		for y := range len(grid[0]) {
-			p := position{x, y}
-			if grid.height(p) == 0 {
-				n := grid.nTrails(p)
-				result += len(n)
-			}
+	grid.walk(func(p position) {
+		if grid.trailhead(p) {
+			result += grid.peaks(p)
 		}
-	}
+	})
 
 	return result
 }
@@ -108,14 +143,11 @@ func (d day10) Part2() int {
 
 	result := 0
 
-	for x := range len(grid) {
-		for y := range len(grid[0]) {
-			p := position{x, y}
-			if grid.height(p) == 0 {
-				result += grid.rating(p)
-			}
+	grid.walk(func(p position) {
+		if grid.trailhead(p) {
+			result += grid.rating(p)
 		}
-	}
+	})
 
 	return result
 }
