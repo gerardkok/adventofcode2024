@@ -1,6 +1,7 @@
 package main
 
 import (
+	"iter"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -60,11 +61,26 @@ func (g grid) peak(p position) bool {
 	return g.height(p) == '9'
 }
 
-func (g grid) walkNeighbours(p position, fn func(position)) {
-	for _, dir := range directions {
-		next := p.to(dir)
-		if g.height(next) == g.height(p)+1 {
-			fn(next)
+func (g grid) neighbours(p position) iter.Seq[position] {
+	return func(yield func(position) bool) {
+		for _, dir := range directions {
+			next := p.to(dir)
+			if g.height(next) == g.height(p)+1 && !yield(next) {
+				return
+			}
+		}
+	}
+}
+
+func (g grid) trailheads() iter.Seq[position] {
+	return func(yield func(position) bool) {
+		for x := range len(g) {
+			for y := range len(g[0]) {
+				p := position{x, y}
+				if g.trailhead(p) && !yield(p) {
+					return
+				}
+			}
 		}
 	}
 }
@@ -89,9 +105,9 @@ func (g grid) peaks(trailhead position) int {
 			result++
 		}
 
-		g.walkNeighbours(p, func(n position) {
-			todo = append(todo, n)
-		})
+		for neighbour := range g.neighbours(p) {
+			todo = append(todo, neighbour)
+		}
 	}
 
 	return result
@@ -104,20 +120,21 @@ func (g grid) rating(p position) int {
 
 	result := 0
 
-	g.walkNeighbours(p, func(n position) {
-		result += g.rating(n)
-	})
+	for neighbour := range g.neighbours(p) {
+		result += g.rating(neighbour)
+	}
 
 	return result
 }
 
-func (g grid) walk(fn func(position)) {
-	for x := range len(g) {
-		for y := range len(g[0]) {
-			p := position{x, y}
-			fn(p)
-		}
+func (g grid) sum(fn func(position) int) int {
+	result := 0
+
+	for trailhead := range g.trailheads() {
+		result += fn(trailhead)
 	}
+
+	return result
 }
 
 func (d day10) Part1() int {
@@ -125,15 +142,7 @@ func (d day10) Part1() int {
 
 	grid := parseGrid(lines)
 
-	result := 0
-
-	grid.walk(func(p position) {
-		if grid.trailhead(p) {
-			result += grid.peaks(p)
-		}
-	})
-
-	return result
+	return grid.sum(grid.peaks)
 }
 
 func (d day10) Part2() int {
@@ -141,15 +150,7 @@ func (d day10) Part2() int {
 
 	grid := parseGrid(lines)
 
-	result := 0
-
-	grid.walk(func(p position) {
-		if grid.trailhead(p) {
-			result += grid.rating(p)
-		}
-	})
-
-	return result
+	return grid.sum(grid.rating)
 }
 
 func main() {
