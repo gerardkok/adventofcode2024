@@ -1,7 +1,6 @@
 package main
 
 import (
-	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -53,7 +52,7 @@ func (g grid) trailhead(p position) bool {
 	return g.height(p) == '0'
 }
 
-func (g grid) trailend(p position) bool {
+func (g grid) peak(p position) bool {
 	return g.height(p) == '9'
 }
 
@@ -61,18 +60,41 @@ func (p position) to(d direction) position {
 	return position{p.x + d.dx, p.y + d.dy}
 }
 
-func (g grid) ends(p position) map[position]struct{} {
-	if g.trailend(p) {
-		return map[position]struct{}{p: {}}
-	}
-
-	result := make(map[position]struct{})
+func (g grid) neighbours(p position) []position {
+	var result []position
 
 	for _, dir := range directions {
 		next := p.to(dir)
 		if g.height(next) == g.height(p)+1 {
-			n := g.ends(next)
-			maps.Copy(result, n)
+			result = append(result, next)
+		}
+	}
+
+	return result
+}
+
+func (g grid) peaks(trailhead position) int {
+	todo := []position{trailhead}
+	seen := make(map[position]struct{})
+
+	result := 0
+
+	for len(todo) > 0 {
+		p := todo[0]
+		todo = todo[1:]
+
+		if _, ok := seen[p]; ok {
+			continue
+		}
+
+		seen[p] = struct{}{}
+
+		if g.peak(p) {
+			result++
+		}
+
+		for _, n := range g.neighbours(p) {
+			todo = append(todo, n)
 		}
 	}
 
@@ -80,17 +102,14 @@ func (g grid) ends(p position) map[position]struct{} {
 }
 
 func (g grid) rating(p position) int {
-	if g.trailend(p) {
+	if g.peak(p) {
 		return 1
 	}
 
 	result := 0
 
-	for _, dir := range directions {
-		next := p.to(dir)
-		if g.height(next) == g.height(p)+1 {
-			result += g.rating(next)
-		}
+	for _, n := range g.neighbours(p) {
+		result += g.rating(n)
 	}
 
 	return result
@@ -114,8 +133,7 @@ func (d day10) Part1() int {
 
 	grid.walk(func(p position) {
 		if grid.trailhead(p) {
-			n := grid.ends(p)
-			result += len(n)
+			result += grid.peaks(p)
 		}
 	})
 
