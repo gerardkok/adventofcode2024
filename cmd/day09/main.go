@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -20,66 +19,121 @@ type day09 struct {
 	day.DayInput
 }
 
+type block struct {
+	id   int
+	free bool
+}
+
+type file struct {
+	start, length int
+	id            int
+}
+
 type disk struct {
-	blocks []int
-	free   int
+	blocks    []block
+	files     []file
+	freeSpace []file
 }
 
 func NewDay09(opts ...day.Option) day09 {
 	return day09{day.NewDayInput(path, opts...)}
 }
 
-func parseInput(input []byte) disk {
-	var blocks []int
-	free := 0
-
-	for i, c := range bytes.TrimSpace(input) {
-		var id int
-		if i%2 == 0 {
-			id = i / 2
-		} else {
-			id = -1
-			free += int(c - '0')
-		}
-		blocks = append(blocks, slices.Repeat([]int{id}, int(c-'0'))...)
-	}
-
-	return disk{blocks, free}
+func isFree(i int) bool {
+	return i%2 == 1
 }
 
-func (d disk) compact() disk {
-	for l, r := 0, len(d.blocks)-1; l < r; l, r = l+1, r-1 {
+func id(i int) int {
+	if isFree(i) {
+		return 0
+	}
+
+	return i / 2
+}
+
+func parseInput(input []byte) disk {
+	var (
+		blocks    []block
+		files     []file
+		freeSpace []file
+	)
+
+	for i, c := range bytes.TrimSpace(input) {
+		id := id(i)
+		free := isFree(i)
+		length := int(c - '0')
+		f := file{len(blocks), length, id}
+		if free {
+			freeSpace = append(freeSpace, f)
+		} else {
+			files = append([]file{f}, files...) // reversed
+		}
+
+		b := block{id, free}
+		blocks = append(blocks, slices.Repeat([]block{b}, length)...)
+	}
+
+	return disk{blocks, files, freeSpace}
+}
+
+func (d disk) blockCompact() {
+	for l, r := 0, len(d.blocks)-1; ; l, r = l+1, r-1 {
 		// find file
-		for d.blocks[r] == -1 {
+		for d.blocks[r].free {
 			r--
 		}
 
 		// find free block
-		for d.blocks[l] != -1 {
+		for !d.blocks[l].free {
 			l++
 		}
 
-		d.blocks[l] = d.blocks[r]
+		if l >= r {
+			break
+		}
+
+		d.blocks[l], d.blocks[r] = d.blocks[r], d.blocks[l]
+	}
+}
+
+func (d disk) findFreeSpace(f file) int {
+	for i, s := range d.freeSpace {
+		if s.start >= f.start {
+			return -1
+		}
+
+		if s.length >= f.length {
+			return i
+		}
 	}
 
-	return disk{d.blocks[:len(d.blocks)-d.free], 0}
+	return -1
+}
+
+func (d disk) fileCompact() {
+	for _, f := range d.files {
+		s := d.findFreeSpace(f)
+
+		if s == -1 {
+			continue
+		}
+
+		for i := 0; i < f.length; i++ {
+			d.blocks[d.freeSpace[s].start+i], d.blocks[f.start+i] = d.blocks[f.start+i], d.blocks[d.freeSpace[s].start+i]
+		}
+		d.freeSpace[s].start += f.length
+		d.freeSpace[s].length -= f.length
+	}
 }
 
 func (d disk) checksum() int {
 	result := 0
 
 	for i, b := range d.blocks {
-		result += i * b
+		result += i * b.id
 	}
 
 	return result
-}
-
-func (d disk) print() {
-	fmt.Printf("free: %d\n", d.free)
-	for i, b := range d.blocks {
-		fmt.Printf("[%5d] %d\n", i, b)
-	}
 }
 
 func (d day09) Part1() int {
@@ -87,13 +141,19 @@ func (d day09) Part1() int {
 
 	disk := parseInput(input)
 
-	compacted := disk.compact()
+	disk.blockCompact()
 
-	return compacted.checksum()
+	return disk.checksum()
 }
 
 func (d day09) Part2() int {
-	return 0
+	input := d.ReadInput()
+
+	disk := parseInput(input)
+
+	disk.fileCompact()
+
+	return disk.checksum()
 }
 
 func main() {
