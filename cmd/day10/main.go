@@ -21,9 +21,13 @@ type day10 struct {
 
 type grid [][]int
 
-type position [2]int
+type position struct {
+	x, y int
+}
 
-type direction [2]int
+type direction struct {
+	dx, dy int
+}
 
 var directions = []direction{{0, 1}, {1, 0}, {-1, 0}, {0, -1}}
 
@@ -45,19 +49,23 @@ func parseGrid(input []string) grid {
 }
 
 func (g grid) height(p position) int {
-	return g[p[0]][p[1]]
+	return g[p.x][p.y]
 }
 
-func (g grid) nTrails(p position) map[position]int {
+func (p position) to(d direction) position {
+	return position{p.x + d.dx, p.y + d.dy}
+}
+
+func (g grid) ends(p position) map[position]struct{} {
 	if g.height(p) == 9 {
-		return map[position]int{p: 1}
+		return map[position]struct{}{p: {}}
 	}
 
-	result := make(map[position]int)
+	result := make(map[position]struct{})
 	for _, dir := range directions {
-		next := position{p[0] + dir[0], p[1] + dir[1]}
+		next := p.to(dir)
 		if g.height(next) == g.height(p)+1 {
-			n := g.nTrails(next)
+			n := g.ends(next)
 			maps.Copy(result, n)
 		}
 	}
@@ -72,7 +80,7 @@ func (g grid) rating(p position) int {
 
 	result := 0
 	for _, dir := range directions {
-		next := position{p[0] + dir[0], p[1] + dir[1]}
+		next := p.to(dir)
 		if g.height(next) == g.height(p)+1 {
 			result += g.rating(next)
 		}
@@ -92,7 +100,7 @@ func (d day10) Part1() int {
 		for y := range len(grid[0]) {
 			p := position{x, y}
 			if grid.height(p) == 0 {
-				n := grid.nTrails(p)
+				n := grid.ends(p)
 				result += len(n)
 			}
 		}
