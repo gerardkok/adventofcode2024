@@ -34,6 +34,10 @@ func NewDay10(opts ...day.Option) day10 {
 	return day10{day.NewDayInput(path, opts...)}
 }
 
+func (p position) to(d direction) position {
+	return position{p.x + d.dx, p.y + d.dy}
+}
+
 func parseGrid(input []string) grid {
 	result := make(grid, len(input)+2)
 	result[0] = slices.Repeat([]byte{'#'}, len(input[0])+2)
@@ -56,21 +60,13 @@ func (g grid) peak(p position) bool {
 	return g.height(p) == '9'
 }
 
-func (p position) to(d direction) position {
-	return position{p.x + d.dx, p.y + d.dy}
-}
-
-func (g grid) neighbours(p position) []position {
-	var result []position
-
+func (g grid) walkNeighbours(p position, fn func(position)) {
 	for _, dir := range directions {
 		next := p.to(dir)
 		if g.height(next) == g.height(p)+1 {
-			result = append(result, next)
+			fn(next)
 		}
 	}
-
-	return result
 }
 
 func (g grid) peaks(trailhead position) int {
@@ -93,9 +89,9 @@ func (g grid) peaks(trailhead position) int {
 			result++
 		}
 
-		for _, n := range g.neighbours(p) {
+		g.walkNeighbours(p, func(n position) {
 			todo = append(todo, n)
-		}
+		})
 	}
 
 	return result
@@ -108,9 +104,9 @@ func (g grid) rating(p position) int {
 
 	result := 0
 
-	for _, n := range g.neighbours(p) {
+	g.walkNeighbours(p, func(n position) {
 		result += g.rating(n)
-	}
+	})
 
 	return result
 }
