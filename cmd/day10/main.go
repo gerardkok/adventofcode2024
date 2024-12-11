@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"iter"
 	"os"
 	"path/filepath"
@@ -41,11 +42,13 @@ func (p position) to(d direction) position {
 
 func parseGrid(input []string) grid {
 	result := make(grid, len(input)+2)
-	result[0] = slices.Repeat([]byte{'#'}, len(input[0])+2)
-	result[len(input)+1] = slices.Repeat([]byte{'#'}, len(input[0])+2)
+
+	result[0] = bytes.Repeat([]byte{'#'}, len(input[0])+2)
 	for x, line := range input {
 		result[x+1] = []byte("#" + line + "#")
 	}
+	result[len(input)+1] = result[0]
+
 	return result
 }
 
