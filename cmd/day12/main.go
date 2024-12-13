@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"iter"
 	"maps"
 	"os"
@@ -23,7 +22,7 @@ type day12 struct {
 
 type grid [][]byte
 
-type position struct {
+type plot struct {
 	x, y int
 }
 
@@ -31,26 +30,23 @@ type direction struct {
 	dx, dy int
 }
 
-// all plots in a region with the number of neighbours
-type region map[position]struct{}
-
-type garden struct {
-	regions          []region
-	positionToRegion map[position]int
+type region struct {
+	plots           map[plot]struct{}
+	area, perimeter int
 }
+
+type regionIDs [][]int
 
 type square struct {
-	nw, ne, se, sw position
+	nw, ne, se, sw int
 }
-
-var directions = []direction{{0, 1}, {1, 0}, {-1, 0}, {0, -1}}
 
 func NewDay12(opts ...day.Option) day12 {
 	return day12{day.NewDayInput(path, opts...)}
 }
 
-func (p position) to(d direction) position {
-	return position{p.x + d.dx, p.y + d.dy}
+func (p plot) to(d direction) plot {
+	return plot{p.x + d.dx, p.y + d.dy}
 }
 
 func parseGrid(input []string) grid {
@@ -65,36 +61,35 @@ func parseGrid(input []string) grid {
 	return result
 }
 
-func (g grid) plant(p position) byte {
+func (g grid) plant(p plot) byte {
 	return g[p.x][p.y]
 }
 
-func (g grid) border(p position) bool {
+func (g grid) border(p plot) bool {
 	return g.plant(p) == '#'
 }
 
-func (g grid) neighbours(p position) iter.Seq[position] {
-	return func(yield func(position) bool) {
-		if g.border(p) {
-			return
-		}
-		for _, dir := range directions {
-			next := p.to(dir)
-			if g.plant(next) == g.plant(p) && !yield(next) {
-				return
-			}
+func (g grid) neighbours(p plot) []plot {
+	var result []plot
+
+	if g.border(p) {
+		return result
+	}
+
+	for _, dir := range []direction{{0, 1}, {1, 0}, {-1, 0}, {0, -1}} {
+		next := p.to(dir)
+		if g.plant(next) == g.plant(p) {
+			result = append(result, next)
 		}
 	}
+
+	return result
 }
 
-func (g grid) regionCost(start position) (map[position]struct{}, int) {
-	// if g.border(start) {
-	// 	return map[position]struct{}{}, 0
-	// }
-
-	seen := make(map[position]struct{})
-	todo := []position{start}
-	perimeter := 0
+func (g grid) region(start plot) region {
+	seen := make(map[plot]struct{})
+	todo := []plot{start}
+	nNeighbours := 0
 
 	for len(todo) > 0 {
 		p := todo[0]
@@ -106,161 +101,159 @@ func (g grid) regionCost(start position) (map[position]struct{}, int) {
 
 		seen[p] = struct{}{}
 
-		perimeter += 4
-		for n := range g.neighbours(p) {
-			todo = append(todo, n)
-			perimeter--
-		}
+		neighbours := g.neighbours(p)
+		todo = append(todo, neighbours...)
+		nNeighbours += len(neighbours)
 	}
 
-	return seen, perimeter
+	area := len(seen)
+	perimeter := area*4 - nNeighbours
+
+	return region{seen, area, perimeter}
 }
 
-func (g grid) borderRegion() region {
-	result := make(region)
+func (g grid) plots() iter.Seq[plot] {
+	return func(yield func(plot) bool) {
+		for x := range len(g) {
+			for y := range len(g[0]) {
+				p := plot{x, y}
+				if g.border(p) {
+					continue
+				}
 
-	for x := range len(g) {
-		if x > 0 && x < len(g) {
-			continue
-		}
-		for y := range len(g[0]) {
-			if y > 0 && y < len(g[0]) {
-				continue
+				if !yield(p) {
+					return
+				}
 			}
-
-			p := position{x, y}
-			result[p] = struct{}{}
 		}
 	}
-
-	return result
 }
 
 func (g grid) regions() []region {
-	result := []region{g.borderRegion()}
+	result := []region{{}} // fake region for border
+	seen := make(map[plot]struct{})
 
-	seen := make(map[position]struct{})
-
-	for x := range len(g) {
-		for y := range len(g[0]) {
-			p := position{x, y}
-			if g.border(p) {
-				continue
-			}
-
-			if _, ok := seen[p]; ok {
-				continue
-			}
-
-			region, _ := g.regionCost(p)
-			maps.Copy(seen, region)
-			result = append(result, region)
+	for p := range g.plots() {
+		if _, ok := seen[p]; ok {
+			continue
 		}
+
+		region := g.region(p)
+		maps.Copy(seen, region.plots)
+		result = append(result, region)
 	}
 
 	return result
 }
 
-func (g grid) cost() int {
-	seen := make(map[position]struct{})
+func (g grid) costPart1() int {
 	result := 0
 
-	for x := range len(g) {
-		for y := range len(g[0]) {
-			p := position{x, y}
-			if g.border(p) {
-				continue
-			}
-			if _, ok := seen[p]; ok {
-				continue
-			}
+	for _, r := range g.regions() {
+		result += r.area * r.perimeter
+	}
 
-			region, perimeter := g.regionCost(p)
-			maps.Copy(seen, region)
-			result += len(region) * perimeter
+	return result
+}
+
+func (g grid) costPart2() int {
+	regions := g.regions()
+
+	regionIDs := g.regionIDs(regions)
+
+	corners := regionIDs.corners()
+
+	result := 0
+
+	for i, region := range regions {
+		result += region.area * corners[i]
+	}
+
+	return result
+}
+
+func (g grid) regionIDs(regions []region) regionIDs {
+	result := make(regionIDs, len(g))
+
+	for i := range len(g) {
+		result[i] = make([]int, len(g[0]))
+	}
+
+	for j, r := range regions {
+		for p := range r.plots {
+			result[p.x][p.y] = j
 		}
 	}
 
 	return result
 }
 
-func (g grid) makeGarden() garden {
-	regions := g.regions()
-	p2r := make(map[position]int)
+func (r regionIDs) squares() iter.Seq[square] {
+	return func(yield func(square) bool) {
+		for x := range len(r) - 1 {
+			for y := range len(r[0]) - 1 {
+				sq := r.square(x, y)
+				if sq.inside() {
+					continue
+				}
 
-	for i, region := range regions {
-		for p := range region {
-			p2r[p] = i
+				for _, s := range sq.rotations() {
+					if !yield(s) {
+						return
+					}
+				}
+			}
+		}
+	}
+}
+
+func (r regionIDs) square(x, y int) square {
+	nw, ne, se, sw := r[x][y], r[x][y+1], r[x+1][y+1], r[x+1][y]
+	return square{nw, ne, se, sw}
+}
+
+func (r regionIDs) corners() map[int]int {
+	result := make(map[int]int)
+
+	for sq := range r.squares() {
+		if sq.corner() {
+			result[sq.nw]++
 		}
 	}
 
-	return garden{regions, p2r}
+	return result
+}
+
+func (s square) rotations() []square {
+	result := []square{s}
+
+	for range 3 {
+		s = s.rotate()
+
+		result = append(result, s)
+	}
+
+	return result
+}
+
+func (s square) inside() bool {
+	return s.nw == s.ne && s.ne == s.se && s.se == s.sw
 }
 
 func (s square) rotate() square {
 	return square{s.sw, s.nw, s.ne, s.se}
 }
 
-func (g garden) convex(s square) bool {
-	r := g.positionToRegion[s.nw] != g.positionToRegion[s.ne] &&
-		g.positionToRegion[s.nw] != g.positionToRegion[s.sw] // &&
-		// g.positionToRegion[s.nw] != g.positionToRegion[s.se]
-	return r
+func (s square) convex() bool {
+	return s.nw != s.ne && s.nw != s.sw
 }
 
-func (g garden) concave(s square) bool {
-	r := g.positionToRegion[s.nw] == g.positionToRegion[s.ne] &&
-		g.positionToRegion[s.nw] == g.positionToRegion[s.sw] &&
-		g.positionToRegion[s.nw] != g.positionToRegion[s.se]
-	return r
+func (s square) concave() bool {
+	return s.nw == s.ne && s.nw == s.sw && s.nw != s.se
 }
 
-func (g garden) corner(s square) bool {
-	return g.convex(s) || g.concave(s)
-}
-
-func (p position) square() square {
-	nw := p
-	ne := position{p.x, p.y + 1}
-	se := position{p.x + 1, p.y + 1}
-	sw := position{p.x + 1, p.y}
-	return square{nw, ne, se, sw}
-}
-
-func (s square) print() string {
-	return fmt.Sprintf("nw: %v, ne: %v\nsw: %v, se: %v\n", s.nw, s.ne, s.sw, s.se)
-}
-
-func (g grid) corners() int {
-	garden := g.makeGarden()
-	corners := make(map[int]int)
-
-	for x := range len(g) - 1 {
-		for y := range len(g[0]) - 1 {
-			p := position{x, y}
-
-			sq := p.square()
-			for range 4 {
-				corner := garden.corner(sq)
-				if corner {
-					corners[garden.positionToRegion[sq.nw]]++
-				}
-
-				sq = sq.rotate()
-			}
-		}
-	}
-
-	cost := 0
-	for i, region := range garden.regions {
-		if i == 0 {
-			continue
-		}
-		fmt.Printf("area: %d, corners: %d\n", len(region), corners[i])
-		cost += len(region) * corners[i]
-	}
-
-	return cost
+func (s square) corner() bool {
+	return s.convex() || s.concave()
 }
 
 func (d day12) Part1() int {
@@ -268,7 +261,7 @@ func (d day12) Part1() int {
 
 	grid := parseGrid(lines)
 
-	return grid.cost()
+	return grid.costPart1()
 }
 
 func (d day12) Part2() int {
@@ -276,9 +269,7 @@ func (d day12) Part2() int {
 
 	grid := parseGrid(lines)
 
-	fmt.Println(grid)
-
-	return grid.corners()
+	return grid.costPart2()
 }
 
 func main() {
