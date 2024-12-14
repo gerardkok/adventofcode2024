@@ -50,6 +50,27 @@ func (d DayInput) ReadInput() []byte {
 	return input
 }
 
+func (d DayInput) ReadByteGrid() [][]byte {
+	file, err := os.Open(d.Input)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	var result [][]byte
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		result = append(result, []byte(scanner.Text()))
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return result
+}
+
 func NewDayInput(path string, opts ...Option) DayInput {
 	d := DayInput{
 		Input: filepath.Join(path, "input.txt"),
@@ -82,4 +103,14 @@ func WithInput(input string) Option {
 func Solve(p Day) {
 	fmt.Println(p.Part1())
 	fmt.Println(p.Part2())
+}
+
+func SumFunc[T any](s []T, fn func(T) int) int {
+	result := 0
+
+	for _, e := range s {
+		result += fn(e)
+	}
+
+	return result
 }

@@ -5,24 +5,27 @@ import (
 	"slices"
 )
 
-type Direction struct {
-	Dx, Dy int
-}
-
 type Point struct {
 	X, Y int
 }
 
-type Grid interface {
-	Neighbours(Point) iter.Seq[Point]
-	Points() iter.Seq[Point]
+type Direction struct {
+	Dx, Dy int
 }
 
 func (p Point) To(d Direction) Point {
 	return Point{p.X + d.Dx, p.Y + d.Dy}
 }
 
-func Bfs(g Grid, start Point) iter.Seq[Point] {
+type Grid[T comparable] struct {
+	Points [][]T
+}
+
+func (g Grid[T]) At(p Point) T {
+	return g.Points[p.X][p.Y]
+}
+
+func (g Grid[T]) Bfs(start Point, appendSeq func(p Point) iter.Seq[Point]) iter.Seq[Point] {
 	return func(yield func(Point) bool) {
 		seen := make(map[Point]struct{})
 		todo := []Point{start}
@@ -41,53 +44,83 @@ func Bfs(g Grid, start Point) iter.Seq[Point] {
 
 			seen[p] = struct{}{}
 
-			todo = slices.AppendSeq(todo, g.Neighbours(p))
+			todo = slices.AppendSeq(todo, appendSeq(p))
 		}
 	}
 }
 
-type BorderedGrid[T comparable] struct {
-	points [][]T
-	border T
-}
-
-func MakeBorderedGrid[T comparable](points [][]T, border T) BorderedGrid[T] {
-	p := make([][]T, len(points)+2)
-
-	p[0] = slices.Repeat([]T{border}, len(points[0])+2)
-	for i, l := range points {
-		p[i] = slices.Concat([]T{border}, l, []T{border})
-	}
-	p[len(points)+1] = slices.Repeat([]T{border}, len(points[0])+2)
-
-	return BorderedGrid[T]{p, border}
-}
-
-func (b BorderedGrid[T]) Neighbours(p Point) iter.Seq[Point] {
+func (g Grid[T]) Neighbours4(p Point) iter.Seq[Point] {
 	return func(yield func(Point) bool) {
-		if b.points[p.X][p.Y] == b.border {
-			return
-		}
-
 		for _, dir := range []Direction{{0, 1}, {1, 0}, {-1, 0}, {0, -1}} {
 			next := p.To(dir)
-			if b.points[next.X][next.Y] != b.border && !yield(next) {
+			if next.X < 0 || next.X >= len(g.Points) || next.Y < 0 || next.Y >= len(g.Points[0]) {
+				continue
+			}
+
+			if !yield(next) {
 				return
 			}
 		}
 	}
 }
 
-func (b BorderedGrid[T]) Points() iter.Seq[Point] {
+func (g Grid[T]) PointsIter() iter.Seq[Point] {
 	return func(yield func(Point) bool) {
-		for x := range len(b.points) {
-			for y := range len(b.points[0]) {
-				p := Point{x, y}
-				if b.points[x][y] == b.border {
+		for x, row := range g.Points {
+			for y := range row {
+				if !yield(Point{x, y}) {
+					return
+				}
+			}
+		}
+	}
+}
+
+type BorderedGrid[T comparable] struct {
+	Grid[T]
+	border T
+}
+
+func NewBorderedGrid[T comparable](points [][]T, border T) BorderedGrid[T] {
+	p := make([][]T, len(points)+2)
+
+	p[0] = slices.Repeat([]T{border}, len(points[0])+2)
+	for i, l := range points {
+		p[i+1] = slices.Concat([]T{border}, l, []T{border})
+	}
+	p[len(points)+1] = slices.Repeat([]T{border}, len(points[0])+2)
+
+	return BorderedGrid[T]{Grid[T]{p}, border}
+}
+
+func (b BorderedGrid[T]) Neighbours4(p Point) iter.Seq[Point] {
+	return func(yield func(Point) bool) {
+		if b.At(p) == b.border {
+			return
+		}
+
+		for _, dir := range []Direction{{0, 1}, {1, 0}, {-1, 0}, {0, -1}} {
+			next := p.To(dir)
+			if b.At(next) == b.border {
+				continue
+			}
+
+			if !yield(next) {
+				return
+			}
+		}
+	}
+}
+
+func (b BorderedGrid[T]) PointsIter() iter.Seq[Point] {
+	return func(yield func(Point) bool) {
+		for x, row := range b.Points {
+			for y, p := range row {
+				if p == b.border {
 					continue
 				}
 
-				if !yield(p) {
+				if !yield(Point{x, y}) {
 					return
 				}
 			}
