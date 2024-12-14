@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"iter"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -17,10 +16,9 @@ var (
 )
 
 type day10 struct {
-	day.DayInput
+	grid       [][]byte
+	trailheads []position
 }
-
-type grid [][]byte
 
 type position struct {
 	x, y int
@@ -30,65 +28,69 @@ type direction struct {
 	dx, dy int
 }
 
-var directions = []direction{{0, 1}, {1, 0}, {-1, 0}, {0, -1}}
+func readGrid(d day.DayInput) [][]byte {
+	input := d.ReadByteGrid()
+
+	grid := make([][]byte, len(input)+2)
+
+	grid[0] = bytes.Repeat([]byte{0}, len(input[0])+2)
+	for i, line := range input {
+		grid[i+1] = slices.Concat([]byte{0}, line, []byte{0})
+	}
+	grid[len(input)+1] = bytes.Repeat([]byte{0}, len(input[0])+2)
+
+	return grid
+}
+
+func trailheads(grid [][]byte) []position {
+	var result []position
+
+	for x, line := range grid {
+		for y, v := range line {
+			if v == '0' {
+				result = append(result, position{x, y})
+			}
+		}
+	}
+
+	return result
+}
 
 func NewDay10(opts ...day.Option) day10 {
-	return day10{day.NewDayInput(path, opts...)}
+	input := day.NewDayInput(path, opts...)
+
+	grid := readGrid(input)
+	trailheads := trailheads(grid)
+
+	return day10{grid, trailheads}
 }
 
 func (p position) to(d direction) position {
 	return position{p.x + d.dx, p.y + d.dy}
 }
 
-func parseGrid(input []string) grid {
-	result := make(grid, len(input)+2)
+func (d day10) height(p position) byte {
+	return d.grid[p.x][p.y]
+}
 
-	result[0] = bytes.Repeat([]byte{'#'}, len(input[0])+2)
-	for x, line := range input {
-		result[x+1] = []byte("#" + line + "#")
+func (d day10) peak(p position) bool {
+	return d.height(p) == '9'
+}
+
+func (d day10) neighbours(p position) []position {
+	var result []position
+
+	for _, dir := range []direction{{0, 1}, {1, 0}, {-1, 0}, {0, -1}} {
+		next := p.to(dir)
+		if d.height(next) == d.height(p)+1 {
+			result = append(result, next)
+		}
 	}
-	result[len(input)+1] = result[0]
 
 	return result
 }
 
-func (g grid) height(p position) byte {
-	return g[p.x][p.y]
-}
-
-func (g grid) trailhead(p position) bool {
-	return g.height(p) == '0'
-}
-
-func (g grid) peak(p position) bool {
-	return g.height(p) == '9'
-}
-
-func (g grid) neighbours(p position) iter.Seq[position] {
-	return func(yield func(position) bool) {
-		for _, dir := range directions {
-			next := p.to(dir)
-			if g.height(next) == g.height(p)+1 && !yield(next) {
-				return
-			}
-		}
-	}
-}
-
-func (g grid) trailheads() iter.Seq[position] {
-	return func(yield func(position) bool) {
-		for x := range len(g) {
-			for y := range len(g[0]) {
-				p := position{x, y}
-				if g.trailhead(p) && !yield(p) {
-					return
-				}
-			}
-		}
-	}
-}
-
-func (g grid) peaks(trailhead position) int {
+func (d day10) peaks(trailhead position) int {
 	todo := []position{trailhead}
 	seen := make(map[position]struct{})
 
@@ -104,54 +106,36 @@ func (g grid) peaks(trailhead position) int {
 
 		seen[p] = struct{}{}
 
-		if g.peak(p) {
+		if d.peak(p) {
 			result++
 		}
 
-		todo = slices.AppendSeq(todo, g.neighbours(p))
+		todo = append(todo, d.neighbours(p)...)
 	}
 
 	return result
 }
 
-func (g grid) rating(p position) int {
-	if g.peak(p) {
+func (d day10) rating(p position) int {
+	if d.peak(p) {
 		return 1
 	}
 
 	result := 0
 
-	for neighbour := range g.neighbours(p) {
-		result += g.rating(neighbour)
-	}
-
-	return result
-}
-
-func (g grid) sum(fn func(position) int) int {
-	result := 0
-
-	for trailhead := range g.trailheads() {
-		result += fn(trailhead)
+	for _, neighbour := range d.neighbours(p) {
+		result += d.rating(neighbour)
 	}
 
 	return result
 }
 
 func (d day10) Part1() int {
-	lines := d.ReadLines()
-
-	grid := parseGrid(lines)
-
-	return grid.sum(grid.peaks)
+	return day.SumFunc(d.trailheads, d.peaks)
 }
 
 func (d day10) Part2() int {
-	lines := d.ReadLines()
-
-	grid := parseGrid(lines)
-
-	return grid.sum(grid.rating)
+	return day.SumFunc(d.trailheads, d.rating)
 }
 
 func main() {
