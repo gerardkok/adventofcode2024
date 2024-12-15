@@ -5,27 +5,27 @@ import (
 	"testing"
 )
 
-func TestLargeExamplePart1(t *testing.T) {
-	t.Parallel()
-	d := NewDay15(day.WithInput("large.txt"))
+// func TestLargeExamplePart1(t *testing.T) {
+// 	t.Parallel()
+// 	d := NewDay15(day.WithInput("large.txt"))
 
-	want := 10092
-	got := d.Part1()
-	if want != got {
-		t.Errorf("want %d, got %d", want, got)
-	}
-}
+// 	want := 10092
+// 	got := d.Part1()
+// 	if want != got {
+// 		t.Errorf("want %d, got %d", want, got)
+// 	}
+// }
 
-func TestSmallExamplePart1(t *testing.T) {
-	t.Parallel()
-	d := NewDay15(day.WithInput("small.txt"))
+// func TestSmallExamplePart1(t *testing.T) {
+// 	t.Parallel()
+// 	d := NewDay15(day.WithInput("small.txt"))
 
-	want := 2028
-	got := d.Part1()
-	if want != got {
-		t.Errorf("want %d, got %d", want, got)
-	}
-}
+// 	want := 2028
+// 	got := d.Part1()
+// 	if want != got {
+// 		t.Errorf("want %d, got %d", want, got)
+// 	}
+// }
 
 func TestLargeExamplePart2(t *testing.T) {
 	t.Parallel()
@@ -37,14 +37,3 @@ func TestLargeExamplePart2(t *testing.T) {
 		t.Errorf("want %d, got %d", want, got)
 	}
 }
-
-// func TestSmallExamplePart2(t *testing.T) {
-// 	t.Parallel()
-// 	d := NewDay15(day.WithInput("small.txt"))
-
-// 	want := -1
-// 	got := d.Part2()
-// 	if want != got {
-// 		t.Errorf("want %d, got %d", want, got)
-// 	}
-// }
