@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"maps"
 	"os"
 	"path/filepath"
@@ -38,6 +37,8 @@ type direction struct {
 type swap struct {
 	p, q position
 }
+
+type swapSet map[swap]struct{}
 
 var (
 	moveMap = map[byte]direction{
@@ -78,130 +79,92 @@ func (p position) to(d direction) position {
 	return position{p.x + d.dx, p.y + d.dy}
 }
 
-func (w warehouse) String() string {
-	result := ""
-
-	for _, line := range w.grid {
-		result += fmt.Sprintf("%s\n", string(line))
-	}
-	result += fmt.Sprintln()
-	// result += fmt.Sprintf("%s\n", string(w.moves))
-	// result += fmt.Sprintln()
-	result += fmt.Sprintf("robot: (%d,%d)\n", w.robot.x, w.robot.y)
-
-	return result
-}
-
 func (w *warehouse) swap(a, b position) {
 	w.grid[a.x][a.y], w.grid[b.x][b.y] = w.grid[b.x][b.y], w.grid[a.x][a.y]
 }
 
-func mergeS(s, t map[swap]struct{}) map[swap]struct{} {
-	// result := make(map[swap]struct{})
-	// maps.Copy(result, s)
-	// maps.Copy(result, t)
-	// return result
-	maps.Copy(s, t)
-	return s
-}
-
-func merge(s, t []map[swap]struct{}) []map[swap]struct{} {
-	if len(s) == 0 || len(t) == 0 {
-		return nil
+func merge(s, t []swapSet) []swapSet {
+	if len(t) < len(s) {
+		s, t = t, s
 	}
 
-	var result []map[swap]struct{}
+	result := make([]swapSet, len(t))
+	copy(result, t)
 
-	for i := range min(len(s), len(t)) {
-		maps.Copy(s[i], t[i])
-		result = append(result, s[i])
-	}
-	if len(s) < len(t) {
-		result = append(result, t[len(s):]...)
-	}
-	if len(s) > len(t) {
-		result = append(result, s[len(t):]...)
+	for i := range s {
+		maps.Copy(result[i], s[i])
 	}
 
 	return result
 }
 
-func swapAppend(swaps []map[swap]struct{}, e map[swap]struct{}) []map[swap]struct{} {
-	if len(swaps) == 0 {
-		return nil
-	}
-
-	return append(swaps, e)
-}
-
-func (w warehouse) moveHorizontally2(p position, d direction) []map[swap]struct{} {
-	next := position{p.x + d.dx, p.y + d.dy}
+func (w warehouse) horizontalSwaps(p position, d direction) ([]swapSet, bool) {
+	next := p.to(d)
 	s := swap{p, next}
-	switch w.grid[next.x][next.y] {
+	c := w.grid[next.x][next.y]
+
+	switch c {
 	case '.':
-		return []map[swap]struct{}{map[swap]struct{}{s: struct{}{}}}
+		return []swapSet{{s: {}}}, true
 	case 'O', '[', ']':
-		return swapAppend(w.moveHorizontally2(next, d), map[swap]struct{}{s: struct{}{}})
+		swaps, ok := w.horizontalSwaps(next, d)
+		return append(swaps, swapSet{s: {}}), ok
 	default:
-		return nil
+		return nil, false
 	}
 }
 
-func (w warehouse) moveVertically2(p position, d direction) []map[swap]struct{} {
-	next := position{p.x + d.dx, p.y + d.dy}
+func (w warehouse) verticalSwaps(p position, d direction) ([]swapSet, bool) {
+	next := p.to(d)
 	s := swap{p, next}
-	switch w.grid[next.x][next.y] {
+	c := w.grid[next.x][next.y]
+
+	switch c {
 	case '.':
-		return []map[swap]struct{}{map[swap]struct{}{s: struct{}{}}}
+		return []swapSet{{s: {}}}, true
 	case 'O':
-		return swapAppend(w.moveVertically2(next, d), map[swap]struct{}{s: struct{}{}})
-	case '[':
-		rightOfNext := position{next.x, next.y + 1}
-		r := swapAppend(merge(w.moveVertically2(next, d), w.moveVertically2(rightOfNext, d)), map[swap]struct{}{s: struct{}{}})
-		// fmt.Printf("[ swaps: %v\n", r)
-		return r
-	case ']':
-		leftOfNext := position{next.x, next.y - 1}
-		r := swapAppend(merge(w.moveVertically2(next, d), w.moveVertically2(leftOfNext, d)), map[swap]struct{}{s: struct{}{}})
-		// fmt.Printf("] swaps: %v\n", r)
-		return r
+		swaps, ok := w.verticalSwaps(next, d)
+		return append(swaps, swapSet{s: {}}), ok
+	case '[', ']':
+		otherHalf := position{next.x, next.y + dyOtherHalf[c]}
+		swaps, ok := w.wideBoxSwaps(next, otherHalf, d)
+		return append(swaps, swapSet{s: {}}), ok
 	default:
-		return nil
+		return nil, false
 	}
 }
 
-func (w warehouse) move2(p position, d direction) []map[swap]struct{} {
+func (w warehouse) wideBoxSwaps(p, q position, d direction) ([]swapSet, bool) {
+	swapsP, okP := w.verticalSwaps(p, d)
+	swapsQ, okQ := w.verticalSwaps(q, d)
+	return merge(swapsP, swapsQ), okP && okQ
+}
+
+func (w warehouse) move(p position, d direction) ([]swapSet, bool) {
 	if d.dx == 0 {
-		return w.moveHorizontally2(p, d)
+		return w.horizontalSwaps(p, d)
 	}
 
-	switch w.grid[p.x][p.y] {
-	case '[':
-		right := position{p.x, p.y + 1}
-		return merge(w.moveVertically2(p, d), w.moveVertically2(right, d))
-	case ']':
-		left := position{p.x, p.y - 1}
-		return merge(w.moveVertically2(p, d), w.moveVertically2(left, d))
+	c := w.grid[p.x][p.y]
+	switch c {
+	case '[', ']':
+		otherHalf := position{p.x, p.y + dyOtherHalf[c]}
+		return w.wideBoxSwaps(p, otherHalf, d)
 	default:
-		return w.moveVertically2(p, d)
+		return w.verticalSwaps(p, d)
 	}
 }
 
-func (w *warehouse) moveRobot2(d direction) {
-	swaps := w.move2(w.robot, d)
-	// fmt.Println(swaps)
-
-	if len(swaps) == 0 {
-		return
-	}
-
-	for _, v := range swaps {
-		for s := range v {
-			w.swap(s.p, s.q)
+func (w *warehouse) moveRobot(d direction) {
+	if swaps, ok := w.move(w.robot, d); ok {
+		for _, v := range swaps {
+			for s := range v {
+				w.swap(s.p, s.q)
+			}
 		}
-	}
 
-	w.robot.x, w.robot.y = w.robot.x+d.dx, w.robot.y+d.dy
+		w.robot.x, w.robot.y = w.robot.x+d.dx, w.robot.y+d.dy
+	}
 }
 
 func (w warehouse) sumBoxesGPS() int {
@@ -255,23 +218,16 @@ func (d day15) warehousePart2() warehouse {
 	return warehouse{grid, d.moves, robot}
 }
 
-func (w warehouse) sequence() {
+func (w warehouse) moveSequence() {
 	for _, move := range w.moves {
-		// if w.canMoveRobot(moveMap[move]) {
-		// 	w.moveRobot(moveMap[move])
-		// }
-		// fmt.Printf("%c\n", move)
-		// fmt.Println(w)
-		w.moveRobot2(moveMap[move])
-		// fmt.Println(w)
-		// fmt.Println("---")
+		w.moveRobot(moveMap[move])
 	}
 }
 
 func (d day15) Part1() int {
 	w := d.warehousePart1()
 
-	w.sequence()
+	w.moveSequence()
 
 	return w.sumBoxesGPS()
 }
@@ -279,7 +235,7 @@ func (d day15) Part1() int {
 func (d day15) Part2() int {
 	w := d.warehousePart2()
 
-	w.sequence()
+	w.moveSequence()
 
 	return w.sumBoxesGPS()
 }
