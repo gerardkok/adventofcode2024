@@ -104,13 +104,3 @@ func Solve(p Day) {
 	fmt.Println(p.Part1())
 	fmt.Println(p.Part2())
 }
-
-func SumFunc[T any](s []T, fn func(T) int) int {
-	result := 0
-
-	for _, e := range s {
-		result += fn(e)
-	}
-
-	return result
-}

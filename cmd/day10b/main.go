@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
 	"adventofcode2024/internal/grid"
 )
@@ -16,17 +17,37 @@ var (
 )
 
 type day10b struct {
-	day.DayInput
+	grid       grid.Grid[byte]
+	trailheads []grid.Point
+}
+
+func trailheads(g grid.Grid[byte]) []grid.Point {
+	var result []grid.Point
+
+	for x, line := range g {
+		for y, v := range line {
+			if v == '0' {
+				result = append(result, grid.Point{X: x, Y: y})
+			}
+		}
+	}
+
+	return result
 }
 
 func NewDay10b(opts ...day.Option) day10b {
-	return day10b{day.NewDayInput(path, opts...)}
+	input := day.NewDayInput(path, opts...)
+
+	grid := input.ReadByteGrid()
+	trailheads := trailheads(grid)
+
+	return day10b{grid, trailheads}
 }
 
-func up(g grid.BorderedGrid[byte], p grid.Point) iter.Seq[grid.Point] {
+func (d day10b) up(p grid.Point) iter.Seq[grid.Point] {
 	return func(yield func(grid.Point) bool) {
-		for n := range g.Neighbours4(p) {
-			if g.At(p)+1 != g.At(n) {
+		for n := range d.grid.Neighbours4(p) {
+			if d.grid.At(p)+1 != d.grid.At(n) {
 				continue
 			}
 
@@ -37,29 +58,29 @@ func up(g grid.BorderedGrid[byte], p grid.Point) iter.Seq[grid.Point] {
 	}
 }
 
-func rating(g grid.BorderedGrid[byte], p grid.Point) int {
-	if g.At(p) == '9' {
+func (d day10b) rating(p grid.Point) int {
+	if d.grid.At(p) == '9' {
 		return 1
 	}
 
 	result := 0
 
-	for n := range up(g, p) {
-		result += rating(g, n)
+	for n := range d.up(p) {
+		result += d.rating(n)
 	}
 
 	return result
 }
 
-func peaks(g grid.BorderedGrid[byte], trailhead grid.Point) int {
+func (d day10b) peaks(trailhead grid.Point) int {
 	appender := func(p grid.Point) iter.Seq[grid.Point] {
-		return up(g, p)
+		return d.up(p)
 	}
 
 	peaks := 0
 
-	for p := range g.Bfs(trailhead, appender) {
-		if g.At(p) == '9' {
+	for p := range d.grid.Bfs(trailhead, appender) {
+		if d.grid.At(p) == '9' {
 			peaks++
 		}
 	}
@@ -68,33 +89,11 @@ func peaks(g grid.BorderedGrid[byte], trailhead grid.Point) int {
 }
 
 func (d day10b) Part1() int {
-	input := d.ReadByteGrid()
-	g := grid.NewBorderedGrid[byte](input, byte(0))
-
-	sum := 0
-
-	for p := range g.PointsIter() {
-		if g.At(p) == '0' {
-			sum += peaks(g, p)
-		}
-	}
-
-	return sum
+	return conv.SumFunc(d.trailheads, d.peaks)
 }
 
 func (d day10b) Part2() int {
-	input := d.ReadByteGrid()
-	g := grid.NewBorderedGrid[byte](input, byte(0))
-
-	sum := 0
-
-	for p := range g.PointsIter() {
-		if g.At(p) == '0' {
-			sum += rating(g, p)
-		}
-	}
-
-	return sum
+	return conv.SumFunc(d.trailheads, d.rating)
 }
 
 func main() {

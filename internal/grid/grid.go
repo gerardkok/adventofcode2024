@@ -17,12 +17,10 @@ func (p Point) To(d Direction) Point {
 	return Point{p.X + d.Dx, p.Y + d.Dy}
 }
 
-type Grid[T comparable] struct {
-	Points [][]T
-}
+type Grid[T comparable] [][]T
 
 func (g Grid[T]) At(p Point) T {
-	return g.Points[p.X][p.Y]
+	return g[p.X][p.Y]
 }
 
 func (g Grid[T]) Bfs(start Point, appendSeq func(p Point) iter.Seq[Point]) iter.Seq[Point] {
@@ -53,7 +51,7 @@ func (g Grid[T]) Neighbours4(p Point) iter.Seq[Point] {
 	return func(yield func(Point) bool) {
 		for _, dir := range []Direction{{0, 1}, {1, 0}, {-1, 0}, {0, -1}} {
 			next := p.To(dir)
-			if next.X < 0 || next.X >= len(g.Points) || next.Y < 0 || next.Y >= len(g.Points[0]) {
+			if next.X < 0 || next.X >= len(g) || next.Y < 0 || next.Y >= len(g[0]) {
 				continue
 			}
 
@@ -64,9 +62,9 @@ func (g Grid[T]) Neighbours4(p Point) iter.Seq[Point] {
 	}
 }
 
-func (g Grid[T]) PointsIter() iter.Seq[Point] {
+func (g Grid[T]) Points() iter.Seq[Point] {
 	return func(yield func(Point) bool) {
-		for x, row := range g.Points {
+		for x, row := range g {
 			for y := range row {
 				if !yield(Point{x, y}) {
 					return
@@ -82,15 +80,15 @@ type BorderedGrid[T comparable] struct {
 }
 
 func NewBorderedGrid[T comparable](points [][]T, border T) BorderedGrid[T] {
-	p := make([][]T, len(points)+2)
+	g := make(Grid[T], len(points)+2)
 
-	p[0] = slices.Repeat([]T{border}, len(points[0])+2)
+	g[0] = slices.Repeat([]T{border}, len(points[0])+2)
 	for i, l := range points {
-		p[i+1] = slices.Concat([]T{border}, l, []T{border})
+		g[i+1] = slices.Concat([]T{border}, l, []T{border})
 	}
-	p[len(points)+1] = slices.Repeat([]T{border}, len(points[0])+2)
+	g[len(points)+1] = slices.Repeat([]T{border}, len(points[0])+2)
 
-	return BorderedGrid[T]{Grid[T]{p}, border}
+	return BorderedGrid[T]{g, border}
 }
 
 func (b BorderedGrid[T]) Neighbours4(p Point) iter.Seq[Point] {
@@ -112,9 +110,9 @@ func (b BorderedGrid[T]) Neighbours4(p Point) iter.Seq[Point] {
 	}
 }
 
-func (b BorderedGrid[T]) PointsIter() iter.Seq[Point] {
+func (b BorderedGrid[T]) Points() iter.Seq[Point] {
 	return func(yield func(Point) bool) {
-		for x, row := range b.Points {
+		for x, row := range b.Grid {
 			for y, p := range row {
 				if p == b.border {
 					continue
