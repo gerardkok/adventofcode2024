@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -34,12 +34,21 @@ type direction struct {
 	dx, dy int
 }
 
-var moveMap = map[byte]direction{
-	'^': {-1, 0},
-	'>': {0, 1},
-	'v': {1, 0},
-	'<': {0, -1},
+type swap struct {
+	p, q position
 }
+
+type swapSet map[swap]struct{}
+
+var (
+	moveMap = map[byte]direction{
+		'^': {-1, 0},
+		'>': {0, 1},
+		'v': {1, 0},
+		'<': {0, -1},
+	}
+	dyOtherHalf = map[byte]int{'[': 1, ']': -1}
+)
 
 func parseInput(lines [][]byte) ([][]byte, []byte) {
 	var result [2][][]byte
@@ -70,138 +79,100 @@ func (p position) to(d direction) position {
 	return position{p.x + d.dx, p.y + d.dy}
 }
 
-func (w warehouse) String() string {
-	result := ""
-
-	for _, line := range w.grid {
-		result += fmt.Sprintf("%s\n", string(line))
-	}
-	result += fmt.Sprintln()
-	result += fmt.Sprintf("%s\n", string(w.moves))
-	result += fmt.Sprintln()
-	result += fmt.Sprintf("robot: (%d,%d)\n", w.robot.x, w.robot.y)
-
-	return result
-}
-
-func (w warehouse) canMoveVertically(p position, d direction) bool {
-	next := position{p.x + d.dx, p.y + d.dy}
-	switch w.grid[next.x][next.y] {
-	case '.':
-		return true
-	case 'O':
-		return w.canMoveVertically(next, d)
-	case '[':
-		right := position{next.x, next.y + 1}
-		return w.canMoveVertically(next, d) && w.canMoveVertically(right, d)
-	case ']':
-		left := position{next.x, next.y - 1}
-		return w.canMoveVertically(next, d) && w.canMoveVertically(left, d)
-	default: // including '#'
-		return false
-	}
-}
-
-func (w warehouse) canMoveHorizontally(p position, d direction) bool {
-	next := position{p.x + d.dx, p.y + d.dy}
-	switch w.grid[next.x][next.y] {
-	case '.':
-		return true
-	case 'O', '[', ']':
-		return w.canMoveHorizontally(next, d)
-	default:
-		return false
-	}
-}
-
-func (w warehouse) canMove(p position, d direction) bool {
-	if d.dx == 0 {
-		return w.canMoveHorizontally(p, d)
-	}
-
-	switch w.grid[p.x][p.y] {
-	case '[':
-		right := position{p.x, p.y + 1}
-		return w.canMoveVertically(p, d) && w.canMoveVertically(right, d)
-	case ']':
-		left := position{p.x, p.y - 1}
-		return w.canMoveVertically(p, d) && w.canMoveVertically(left, d)
-	default:
-		return w.canMoveVertically(p, d)
-	}
-}
-
 func (w *warehouse) swap(a, b position) {
 	w.grid[a.x][a.y], w.grid[b.x][b.y] = w.grid[b.x][b.y], w.grid[a.x][a.y]
 }
 
-func (w *warehouse) moveHorizontally(p position, d direction) {
-	next := position{p.x + d.dx, p.y + d.dy}
-	switch w.grid[next.x][next.y] {
+func merge(s, t []swapSet) []swapSet {
+	if len(t) < len(s) {
+		s, t = t, s
+	}
+
+	result := make([]swapSet, len(t))
+	copy(result, t)
+
+	for i := range s {
+		maps.Copy(result[i], s[i])
+	}
+
+	return result
+}
+
+func (w warehouse) horizontalSwaps(p position, d direction) ([]swapSet, bool) {
+	next := p.to(d)
+	s := swap{p, next}
+	c := w.grid[next.x][next.y]
+
+	switch c {
 	case '.':
-		w.swap(p, next)
+		return []swapSet{{s: {}}}, true
 	case 'O', '[', ']':
-		w.moveHorizontally(next, d)
-		w.swap(p, next)
-	}
-}
-
-func (w *warehouse) moveVertically(p position, d direction) {
-	next := position{p.x + d.dx, p.y + d.dy}
-	switch w.grid[next.x][next.y] {
-	case '.':
-		w.swap(p, next)
-	case 'O':
-		w.moveVertically(next, d)
-		w.swap(p, next)
-	case '[':
-		rightOfNext := position{next.x, next.y + 1}
-		w.moveVertically(next, d)
-		w.moveVertically(rightOfNext, d)
-		w.swap(next, p)
-	case ']':
-		leftOfNext := position{next.x, next.y - 1}
-		w.moveVertically(next, d)
-		w.moveVertically(leftOfNext, d)
-		w.swap(next, p)
-	}
-}
-
-func (w *warehouse) move(p position, d direction) {
-	if d.dx == 0 {
-		w.moveHorizontally(p, d)
-		return
-	}
-
-	switch w.grid[p.x][p.y] {
-	case '[':
-		right := position{p.x, p.y + 1}
-		w.moveVertically(p, d)
-		w.moveVertically(right, d)
-	case ']':
-		left := position{p.x, p.y - 1}
-		w.moveVertically(p, d)
-		w.moveVertically(left, d)
+		swaps, ok := w.horizontalSwaps(next, d)
+		return append(swaps, swapSet{s: {}}), ok
 	default:
-		w.moveVertically(p, d)
+		return nil, false
 	}
 }
 
-func (w warehouse) canMoveRobot(d direction) bool {
-	return w.canMove(w.robot, d)
+func (w warehouse) verticalSwaps(p position, d direction) ([]swapSet, bool) {
+	next := p.to(d)
+	s := swap{p, next}
+	c := w.grid[next.x][next.y]
+
+	switch c {
+	case '.':
+		return []swapSet{{s: {}}}, true
+	case 'O':
+		swaps, ok := w.verticalSwaps(next, d)
+		return append(swaps, swapSet{s: {}}), ok
+	case '[', ']':
+		otherHalf := position{next.x, next.y + dyOtherHalf[c]}
+		swaps, ok := w.wideBoxSwaps(next, otherHalf, d)
+		return append(swaps, swapSet{s: {}}), ok
+	default:
+		return nil, false
+	}
+}
+
+func (w warehouse) wideBoxSwaps(p, q position, d direction) ([]swapSet, bool) {
+	swapsP, okP := w.verticalSwaps(p, d)
+	swapsQ, okQ := w.verticalSwaps(q, d)
+	return merge(swapsP, swapsQ), okP && okQ
+}
+
+func (w warehouse) move(p position, d direction) ([]swapSet, bool) {
+	if d.dx == 0 {
+		return w.horizontalSwaps(p, d)
+	}
+
+	c := w.grid[p.x][p.y]
+	switch c {
+	case '[', ']':
+		otherHalf := position{p.x, p.y + dyOtherHalf[c]}
+		return w.wideBoxSwaps(p, otherHalf, d)
+	default:
+		return w.verticalSwaps(p, d)
+	}
 }
 
 func (w *warehouse) moveRobot(d direction) {
-	w.move(w.robot, d)
-	w.robot.x, w.robot.y = w.robot.x+d.dx, w.robot.y+d.dy
+	if swaps, ok := w.move(w.robot, d); ok {
+		for _, v := range swaps {
+			for s := range v {
+				w.swap(s.p, s.q)
+			}
+		}
+
+		w.robot.x, w.robot.y = w.robot.x+d.dx, w.robot.y+d.dy
+	}
 }
 
-func (w warehouse) sumBoxesGPS(edge byte) int {
+func (w warehouse) sumBoxesGPS() int {
 	result := 0
 
 	for x, line := range w.grid {
 		for y, c := range line {
-			if c == edge {
+			if c == 'O' || c == '[' {
 				result += 100*x + y
 			}
 		}
@@ -247,28 +218,26 @@ func (d day15) warehousePart2() warehouse {
 	return warehouse{grid, d.moves, robot}
 }
 
-func (w warehouse) sequence() {
+func (w warehouse) moveSequence() {
 	for _, move := range w.moves {
-		if w.canMoveRobot(moveMap[move]) {
-			w.moveRobot(moveMap[move])
-		}
+		w.moveRobot(moveMap[move])
 	}
 }
 
 func (d day15) Part1() int {
 	w := d.warehousePart1()
 
-	w.sequence()
+	w.moveSequence()
 
-	return w.sumBoxesGPS('O')
+	return w.sumBoxesGPS()
 }
 
 func (d day15) Part2() int {
 	w := d.warehousePart2()
 
-	w.sequence()
+	w.moveSequence()
 
-	return w.sumBoxesGPS('[')
+	return w.sumBoxesGPS()
 }
 
 func main() {
