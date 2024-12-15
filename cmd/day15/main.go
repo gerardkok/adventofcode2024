@@ -41,13 +41,13 @@ type swap struct {
 type swapSet map[swap]struct{}
 
 var (
-	moveMap = map[byte]direction{
+	moves = map[byte]direction{
 		'^': {-1, 0},
 		'>': {0, 1},
 		'v': {1, 0},
 		'<': {0, -1},
 	}
-	dyOtherHalf = map[byte]int{'[': 1, ']': -1}
+	otherHalf = map[byte]direction{'[': {0, 1}, ']': {0, -1}}
 )
 
 func parseInput(lines [][]byte) ([][]byte, []byte) {
@@ -79,8 +79,12 @@ func (p position) to(d direction) position {
 	return position{p.x + d.dx, p.y + d.dy}
 }
 
-func (w *warehouse) swap(a, b position) {
-	w.grid[a.x][a.y], w.grid[b.x][b.y] = w.grid[b.x][b.y], w.grid[a.x][a.y]
+func (w warehouse) at(p position) byte {
+	return w.grid[p.x][p.y]
+}
+
+func (w *warehouse) swap(s swap) {
+	w.grid[s.p.x][s.p.y], w.grid[s.q.x][s.q.y] = w.grid[s.q.x][s.q.y], w.grid[s.p.x][s.p.y]
 }
 
 func merge(s, t []swapSet) []swapSet {
@@ -101,7 +105,7 @@ func merge(s, t []swapSet) []swapSet {
 func (w warehouse) horizontalSwaps(p position, d direction) ([]swapSet, bool) {
 	next := p.to(d)
 	s := swap{p, next}
-	c := w.grid[next.x][next.y]
+	c := w.at(next)
 
 	switch c {
 	case '.':
@@ -117,7 +121,7 @@ func (w warehouse) horizontalSwaps(p position, d direction) ([]swapSet, bool) {
 func (w warehouse) verticalSwaps(p position, d direction) ([]swapSet, bool) {
 	next := p.to(d)
 	s := swap{p, next}
-	c := w.grid[next.x][next.y]
+	c := w.at(next)
 
 	switch c {
 	case '.':
@@ -126,7 +130,7 @@ func (w warehouse) verticalSwaps(p position, d direction) ([]swapSet, bool) {
 		swaps, ok := w.verticalSwaps(next, d)
 		return append(swaps, swapSet{s: {}}), ok
 	case '[', ']':
-		otherHalf := position{next.x, next.y + dyOtherHalf[c]}
+		otherHalf := next.to(otherHalf[c])
 		swaps, ok := w.wideBoxSwaps(next, otherHalf, d)
 		return append(swaps, swapSet{s: {}}), ok
 	default:
@@ -140,30 +144,29 @@ func (w warehouse) wideBoxSwaps(p, q position, d direction) ([]swapSet, bool) {
 	return merge(swapsP, swapsQ), okP && okQ
 }
 
-func (w warehouse) move(p position, d direction) ([]swapSet, bool) {
+func (w warehouse) move(from position, d direction) ([]swapSet, bool) {
 	if d.dx == 0 {
-		return w.horizontalSwaps(p, d)
+		return w.horizontalSwaps(from, d)
 	}
 
-	c := w.grid[p.x][p.y]
-	switch c {
-	case '[', ']':
-		otherHalf := position{p.x, p.y + dyOtherHalf[c]}
-		return w.wideBoxSwaps(p, otherHalf, d)
-	default:
-		return w.verticalSwaps(p, d)
+	c := w.at(from)
+	if c == '[' || c == ']' {
+		otherHalf := from.to(otherHalf[c])
+		return w.wideBoxSwaps(from, otherHalf, d)
 	}
+
+	return w.verticalSwaps(from, d)
 }
 
 func (w *warehouse) moveRobot(d direction) {
 	if swaps, ok := w.move(w.robot, d); ok {
 		for _, v := range swaps {
 			for s := range v {
-				w.swap(s.p, s.q)
+				w.swap(s)
 			}
 		}
 
-		w.robot.x, w.robot.y = w.robot.x+d.dx, w.robot.y+d.dy
+		w.robot = w.robot.to(d)
 	}
 }
 
@@ -220,7 +223,7 @@ func (d day15) warehousePart2() warehouse {
 
 func (w warehouse) moveSequence() {
 	for _, move := range w.moves {
-		w.moveRobot(moveMap[move])
+		w.moveRobot(moves[move])
 	}
 }
 
