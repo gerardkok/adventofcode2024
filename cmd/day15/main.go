@@ -18,7 +18,6 @@ var (
 type day15 struct {
 	gridInput [][]byte
 	moves     []byte
-	robot     position
 }
 
 type warehouse struct {
@@ -42,46 +41,34 @@ var moveMap = map[byte]direction{
 	'<': {0, -1},
 }
 
-func parseInput(lines [][]byte) ([][]byte, []byte, position) {
-	var (
-		result [2][][]byte
-		robot  position
-	)
+func parseInput(lines [][]byte) ([][]byte, []byte) {
+	var result [2][][]byte
 
 	i := 0
-	for r, line := range lines {
+	for _, line := range lines {
 		if len(line) == 0 {
 			i++
 			continue
 		}
 
 		result[i] = append(result[i], line)
-
-		c := bytes.IndexByte(line, '@')
-		if c != -1 {
-			robot = position{r, c}
-		}
 	}
 
 	m := bytes.Join(result[1], []byte{})
-	return result[0], m, robot
+	return result[0], m
 }
 
 func NewDay15(opts ...day.Option) day15 {
 	input := day.NewDayInput(path, opts...)
 	lines := input.ReadByteGrid()
-	grid, moves, robot := parseInput(lines)
+	grid, moves := parseInput(lines)
 
-	return day15{grid, moves, robot}
+	return day15{grid, moves}
 }
 
 func (p position) to(d direction) position {
 	return position{p.x + d.dx, p.y + d.dy}
 }
-
-// func (d day15) offGrid(p position) bool {
-// 	return p.x < 0 || p.x >= len(w.grid) || p.y < 0 || p.y >= len(w.grid[0])
-// }
 
 func (w warehouse) String() string {
 	result := ""
@@ -90,24 +77,11 @@ func (w warehouse) String() string {
 		result += fmt.Sprintf("%s\n", string(line))
 	}
 	result += fmt.Sprintln()
-	// result += fmt.Sprintf("%s\n", string(w.moves))
-	// result += fmt.Sprintln()
+	result += fmt.Sprintf("%s\n", string(w.moves))
+	result += fmt.Sprintln()
 	result += fmt.Sprintf("robot: (%d,%d)\n", w.robot.x, w.robot.y)
 
 	return result
-}
-
-func (w warehouse) movePositions(dir direction) int {
-	for i := 1; ; i++ {
-		x, y := w.robot.x+i*dir.dx, w.robot.y+i*dir.dy
-		//		fmt.Printf("checking (%d,%d): %c\n", x, y, w.grid[x][y])
-		switch w.grid[x][y] {
-		case '.':
-			return i
-		case '#':
-			return 0
-		}
-	}
 }
 
 func (w warehouse) canMoveVertically(p position, d direction) bool {
@@ -174,23 +148,18 @@ func (w *warehouse) moveHorizontally(p position, d direction) {
 
 func (w *warehouse) moveVertically(p position, d direction) {
 	next := position{p.x + d.dx, p.y + d.dy}
-	// fmt.Printf("p: %v: %c, next: %v: %c\n", p, w.grid[p.x][p.y], next, w.grid[next.x][next.y])
 	switch w.grid[next.x][next.y] {
 	case '.':
-		//	fmt.Println("swapping")
 		w.swap(p, next)
 	case 'O':
 		w.moveVertically(next, d)
 		w.swap(p, next)
 	case '[':
-		//fmt.Println("dealing with [")
 		rightOfNext := position{next.x, next.y + 1}
-		//	fmt.Printf("next: %v: %c, right of next: %v: %c\n", next, w.grid[next.x][next.y], rightOfNext, w.grid[rightOfNext.x][rightOfNext.y])
 		w.moveVertically(next, d)
 		w.moveVertically(rightOfNext, d)
 		w.swap(next, p)
 	case ']':
-		//fmt.Println("dealing with ]")
 		leftOfNext := position{next.x, next.y - 1}
 		w.moveVertically(next, d)
 		w.moveVertically(leftOfNext, d)
@@ -242,7 +211,19 @@ func (w warehouse) sumBoxesGPS(edge byte) int {
 }
 
 func (d day15) warehousePart1() warehouse {
-	return warehouse{d.gridInput, d.moves, d.robot}
+	grid := make([][]byte, len(d.gridInput))
+	var robot position
+
+	for i, line := range d.gridInput {
+		for j, c := range line {
+			grid[i] = append(grid[i], c)
+			if c == '@' {
+				robot = position{i, j}
+			}
+		}
+	}
+
+	return warehouse{grid, d.moves, robot}
 }
 
 func (d day15) warehousePart2() warehouse {
@@ -268,21 +249,16 @@ func (d day15) warehousePart2() warehouse {
 
 func (w warehouse) sequence() {
 	for _, move := range w.moves {
-		fmt.Printf("moving %v %c\n", w.robot, move)
 		if w.canMoveRobot(moveMap[move]) {
-			// fmt.Println("can move")
 			w.moveRobot(moveMap[move])
 		}
-
-		fmt.Println(w)
-		fmt.Println("---")
 	}
 }
 
 func (d day15) Part1() int {
 	w := d.warehousePart1()
 
-	//w.sequence()
+	w.sequence()
 
 	return w.sumBoxesGPS('O')
 }
@@ -290,7 +266,6 @@ func (d day15) Part1() int {
 func (d day15) Part2() int {
 	w := d.warehousePart2()
 
-	// fmt.Println(w)
 	w.sequence()
 
 	return w.sumBoxesGPS('[')
