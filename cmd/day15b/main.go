@@ -2,11 +2,9 @@ package main
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
-	"runtime/pprof"
 
 	"adventofcode2024/internal/day"
 )
@@ -82,33 +80,36 @@ func (w warehouse) at(p position) byte {
 	return w.grid[p.x][p.y]
 }
 
-func (w *warehouse) swap(s swap) {
-	w.grid[s.p.x][s.p.y], w.grid[s.q.x][s.q.y] = w.grid[s.q.x][s.q.y], w.grid[s.p.x][s.p.y]
+func (w *warehouse) swap(p position, d direction) {
+	// q is always '.'
+	q := p.to(d)
+	w.grid[q.x][q.y] = w.grid[p.x][p.y]
+	w.grid[p.x][p.y] = '.'
 }
 
-func (w warehouse) horizontalSwaps(from position, d direction) ([]swap, bool) {
-	var result []swap
+func (w warehouse) horizontalSwaps(from position, d direction) []position {
+	var result []position
 
 	for {
 		next := from.to(d)
 
-		result = append(result, swap{from, next})
+		result = append(result, from)
 
 		c := w.at(next)
 
 		switch c {
 		case '.':
-			return result, true
+			return result
 		case 'O', '[', ']':
 			from = next
 		default:
-			return nil, false
+			return nil
 		}
 	}
 }
 
-func (w warehouse) verticalSwaps(from position, d direction) ([]swap, bool) {
-	seen := make(map[position]struct{})
+func (w warehouse) verticalSwaps(from position, d direction) []position {
+	seen := make(map[int]struct{})
 	todo := []position{from}
 	c := w.at(from)
 	if c == '[' || c == ']' {
@@ -116,20 +117,22 @@ func (w warehouse) verticalSwaps(from position, d direction) ([]swap, bool) {
 		todo = append(todo, other)
 	}
 
-	var result []swap
+	var result []position
 
 	for len(todo) > 0 {
 		p := todo[0]
 		next := p.to(d)
 		todo = todo[1:]
 
-		if _, ok := seen[p]; ok {
+		key := p.x*len(w.grid[0]) + p.y
+
+		if _, ok := seen[key]; ok {
 			continue
 		}
 
-		seen[p] = struct{}{}
+		seen[key] = struct{}{}
 
-		result = append(result, swap{p, next})
+		result = append(result, p)
 
 		c := w.at(next)
 
@@ -141,14 +144,14 @@ func (w warehouse) verticalSwaps(from position, d direction) ([]swap, bool) {
 			otherHalf := next.to(otherHalf[c])
 			todo = append(todo, next, otherHalf)
 		default:
-			return nil, false
+			return nil
 		}
 	}
 
-	return result, true
+	return result
 }
 
-func (w warehouse) move(from position, d direction) ([]swap, bool) {
+func (w warehouse) move(from position, d direction) []position {
 	if d.dx == 0 {
 		return w.horizontalSwaps(from, d)
 	}
@@ -157,11 +160,12 @@ func (w warehouse) move(from position, d direction) ([]swap, bool) {
 }
 
 func (w *warehouse) moveRobot(d direction) {
-	if swaps, ok := w.move(w.robot, d); ok {
-		for i := len(swaps) - 1; i >= 0; i-- {
-			w.swap(swaps[i])
-		}
+	swaps := w.move(w.robot, d)
+	for i := len(swaps) - 1; i >= 0; i-- {
+		w.swap(swaps[i], d)
+	}
 
+	if len(swaps) > 0 {
 		w.robot = w.robot.to(d)
 	}
 }
@@ -233,13 +237,6 @@ func (d day15b) Part1() int {
 
 func (d day15b) Part2() int {
 	w := d.warehousePart2()
-
-	f, err := os.Create("myprogram.prof")
-	if err != nil {
-		log.Fatal(err)
-	}
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
 
 	w.moveSequence()
 
