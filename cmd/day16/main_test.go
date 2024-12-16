@@ -31,7 +31,7 @@ func TestExample1Part2(t *testing.T) {
 	t.Parallel()
 	d := NewDay16(day.WithInput("example1.txt"))
 
-	want := 0
+	want := 45
 	got := d.Part2()
 	if want != got {
 		t.Errorf("want %d, got %d", want, got)
@@ -42,7 +42,7 @@ func TestExample2Part2(t *testing.T) {
 	t.Parallel()
 	d := NewDay16(day.WithInput("example2.txt"))
 
-	want := 0
+	want := 64
 	got := d.Part2()
 	if want != got {
 		t.Errorf("want %d, got %d", want, got)

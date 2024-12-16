@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"fmt"
+	"maps"
 	"math"
 	"os"
 	"path/filepath"
@@ -102,9 +104,75 @@ func NewDay16(opts ...day.Option) day16 {
 	return readInput(input)
 }
 
+func (d day16) paths(p map[state]map[state]struct{}, endStates []state) int {
+	result := make(map[tile]struct{})
+	for _, e := range endStates {
+		maps.Copy(result, d.path(p, e))
+	}
+	return len(result)
+}
+
+func (d day16) path(p map[state]map[state]struct{}, e state) map[tile]struct{} {
+	result := map[tile]struct{}{{e.x, e.y}: {}}
+
+	if e == d.start {
+		return result
+	}
+
+	prevs := p[e]
+	fmt.Printf("l: %d\n", len(prevs))
+	for k := range prevs {
+		maps.Copy(result, d.path(p, k))
+	}
+
+	return result
+}
+
+func (d day16) singlePathDijkstra2() (map[state]map[state]struct{}, []state) {
+	q := newQueue()
+	q.enqueue(d.start, 0)
+	seen := make(map[state]struct{})
+	dist := make(visited)
+	dist[d.start] = 0
+	prev := make(map[state]map[state]struct{})
+
+	min := math.MaxInt
+	var endStates []state
+
+	for {
+		s, cost := q.dequeue()
+		if cost > min {
+			return prev, endStates
+		}
+		if s.x == d.end.x && s.y == d.end.y {
+			min = cost
+			endStates = append(endStates, s)
+		}
+
+		seen[s] = struct{}{}
+
+		for _, newNode := range d.moves(s) {
+			if _, ok := seen[newNode.state]; ok {
+				continue
+			}
+
+			c := cost + newNode.cost
+			if c <= dist.get(newNode.state) {
+				dist[newNode.state] = c
+				q.enqueue(newNode.state, c)
+				if _, ok := prev[newNode.state]; !ok {
+					prev[newNode.state] = make(map[state]struct{})
+				}
+				prev[newNode.state][s] = struct{}{}
+			}
+		}
+	}
+}
+
 func (d day16) singlePathDijkstra() int {
 	q := newQueue()
 	q.enqueue(d.start, 0)
+	seen := make(map[state]struct{})
 	dist := make(visited)
 	dist[d.start] = 0
 
@@ -114,13 +182,18 @@ func (d day16) singlePathDijkstra() int {
 			return cost
 		}
 
+		seen[s] = struct{}{}
+
 		for _, newNode := range d.moves(s) {
-			c := cost + newNode.cost
-			if dist.get(newNode.state) <= c {
+			if _, ok := seen[newNode.state]; ok {
 				continue
 			}
-			dist[newNode.state] = c
-			q.enqueue(newNode.state, c)
+
+			c := cost + newNode.cost
+			if c < dist.get(newNode.state) {
+				dist[newNode.state] = c
+				q.enqueue(newNode.state, c)
+			}
 		}
 	}
 }
@@ -142,13 +215,18 @@ func (d day16) moves(s state) []node {
 }
 
 func (d day16) Part1() int {
-	cost := d.singlePathDijkstra()
-
-	return cost
+	return d.singlePathDijkstra()
 }
 
 func (d day16) Part2() int {
-	return 0
+	p, e := d.singlePathDijkstra2()
+	fmt.Println(p)
+
+	path := d.paths(p, e)
+
+	fmt.Println(path)
+
+	return path
 }
 
 func main() {
