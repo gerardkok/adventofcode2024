@@ -7,7 +7,7 @@ import (
 
 func TestExamplePart1(t *testing.T) {
 	t.Parallel()
-	d := NewDay17(day.WithInput("example.txt"))
+	d := NewDay17(day.WithInput("example1.txt"))
 
 	want := "4,6,3,5,6,3,5,2,1,0"
 	got := d.Part1()
@@ -78,11 +78,11 @@ func Test5Part1(t *testing.T) {
 
 func TestExamplePart2(t *testing.T) {
 	t.Parallel()
-	d := NewDay17(day.WithInput("example.txt"))
+	d := NewDay17(day.WithInput("example2.txt"))
 
-	want := ""
+	want := 117440
 	got := d.Part2()
 	if want != got {
-		t.Errorf("want %s, got %s", want, got)
+		t.Errorf("want %d, got %d", want, got)
 	}
 }

@@ -1,12 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
-	"slices"
-	"strconv"
 	"strings"
 
 	"adventofcode2024/internal/conv"
@@ -123,26 +122,8 @@ func (d day17) bxc(_ byte) {
 }
 
 func (d day17) out(operand byte) byte {
-	switch d.comboOperand(operand) % 8 {
-	case 0:
-		return '0'
-	case 1:
-		return '1'
-	case 2:
-		return '2'
-	case 3:
-		return '3'
-	case 4:
-		return '4'
-	case 5:
-		return '5'
-	case 6:
-		return '6'
-	case 7:
-		return '7'
-	default:
-		return '8'
-	}
+	result := d.comboOperand(operand) % 8
+	return byte(result + '0')
 }
 
 func (d day17) bdv(operand byte) {
@@ -159,7 +140,6 @@ func (d day17) execute() []byte {
 
 	for pointer < len(d.program)-1 {
 		operand := d.program[pointer+1]
-		//fmt.Printf("A: %d, B: %d, C: %d, operator: %c, combo-operand: %d\n", d.register['A'], d.register['B'], d.register['C'], d.program[pointer], d.comboOperand(operand))
 		switch d.program[pointer] {
 		case '0':
 			d.adv(operand)
@@ -197,94 +177,50 @@ func (d day17) execute() []byte {
 	return result
 }
 
-func print(output []int) string {
-	r := make([]string, len(output))
-
-	for i, o := range output {
-		r[i] = strconv.Itoa(o)
-	}
-	return strings.Join(r, ",")
+func join(b []byte, c byte) []byte {
+	return bytes.Join(bytes.Split(b, []byte{}), []byte{c})
 
 }
 
-func octalToDecimal(n int) int {
-	dec := 0
-
-	// Initializing base value to 1, i.e 8^0
-	base := 1
-
-	for n > 0 {
-		lastDigit := n % 10
-		n /= 10
-		dec += lastDigit * base
-		base *= 8
-	}
-
-	return dec
+func tail(b []byte, n int) []byte {
+	return b[len(b)-n:]
 }
 
-func (d day17) equalTail(program []byte) bool {
-	for i, j := len(program)-1, len(d.program)-1; i >= 0; i, j = i-1, j-1 {
-		if program[i] != d.program[j] {
-			return false
-		}
+func (d day17) traceBack(pl, a int) int {
+	if pl == len(d.program) {
+		return a
 	}
 
-	return true
-}
-
-func (d day17) recurPart2(program []byte, a int) []byte {
-	fmt.Printf("recur(%s, %d)\n", string(program), a)
-	if slices.Equal(d.program, program) {
-		return program
-	}
-
-	fmt.Printf("tail: %s, program: %s\n", string(d.program[len(d.program)-len(program):]), string(program))
 	a *= 8
-	l := len(program) + 1
-	fmt.Printf("l: %d\n", l)
+	pl++
 	for i := a; i < a+1024; i++ {
 		d.register['A'] = i
-		d.register['B'] = 0
-		d.register['C'] = 0
 		output := d.execute()
-		fmt.Printf("output: %s\n", string(output))
-		fmt.Printf("len output: %d\n", len(output))
-		if len(output) < l {
+
+		if len(output) < pl || !bytes.Equal(tail(d.program, pl), tail(output, pl)) {
 			continue
 		}
-		p := output[len(output)-l:]
-		fmt.Printf("tail: %v, p: %v\n", d.program[len(d.program)-l:], p)
-		if !d.equalTail(p) {
-			fmt.Println("not equal")
-			continue
-		}
-		fmt.Println("going recur")
-		if d.recurPart2(p, i) != nil {
-			return p
-		}
-		fmt.Println("---")
+
+		return d.traceBack(pl, i)
 	}
 
-	return nil
+	return -1
 }
 
 func (d day17) Part1() string {
 	output := d.execute()
-	return string(output)
+	return string(join(output, ','))
 }
 
-func (d day17) Part2() string {
-	program := d.recurPart2([]byte{}, 0)
+func (d day17) Part2() int {
+	a := d.traceBack(0, 0)
 
-	println(string(program))
-
-	return ""
+	return a
 }
 
 func main() {
 	d := NewDay17(day.FromArgs(os.Args[1:]))
 
-	//fmt.Println(d.Part1())
+	fmt.Println(d.Part1())
 	fmt.Println(d.Part2())
 }
