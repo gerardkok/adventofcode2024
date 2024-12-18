@@ -1,0 +1,366 @@
+recur(, 0)
+tail: , program: 
+l: 1
+output: 5
+len output: 1
+tail: [48], p: [53]
+not equal
+output: 5
+len output: 1
+tail: [48], p: [53]
+not equal
+output: 7
+len output: 1
+tail: [48], p: [55]
+not equal
+output: 6
+len output: 1
+tail: [48], p: [54]
+not equal
+output: 1
+len output: 1
+tail: [48], p: [49]
+not equal
+output: 0
+len output: 1
+tail: [48], p: [48]
+going recur
+recur(0, 5)
+tail: 0, program: 0
+l: 2
+output: 10
+len output: 2
+tail: [51 48], p: [49 48]
+not equal
+output: 50
+len output: 2
+tail: [51 48], p: [53 48]
+not equal
+output: 20
+len output: 2
+tail: [51 48], p: [50 48]
+not equal
+output: 40
+len output: 2
+tail: [51 48], p: [52 48]
+not equal
+output: 00
+len output: 2
+tail: [51 48], p: [48 48]
+not equal
+output: 20
+len output: 2
+tail: [51 48], p: [50 48]
+not equal
+output: 30
+len output: 2
+tail: [51 48], p: [51 48]
+going recur
+recur(30, 46)
+tail: 30, program: 30
+l: 3
+output: 530
+len output: 3
+tail: [53 51 48], p: [53 51 48]
+going recur
+recur(530, 368)
+tail: 530, program: 530
+l: 4
+output: 5530
+len output: 4
+tail: [53 53 51 48], p: [53 53 51 48]
+going recur
+recur(5530, 2944)
+tail: 5530, program: 5530
+l: 5
+output: 55530
+len output: 5
+tail: [51 53 53 51 48], p: [53 53 53 51 48]
+not equal
+output: 55530
+len output: 5
+tail: [51 53 53 51 48], p: [53 53 53 51 48]
+not equal
+output: 75530
+len output: 5
+tail: [51 53 53 51 48], p: [55 53 53 51 48]
+not equal
+output: 65530
+len output: 5
+tail: [51 53 53 51 48], p: [54 53 53 51 48]
+not equal
+output: 15530
+len output: 5
+tail: [51 53 53 51 48], p: [49 53 53 51 48]
+not equal
+output: 05530
+len output: 5
+tail: [51 53 53 51 48], p: [48 53 53 51 48]
+not equal
+output: 35530
+len output: 5
+tail: [51 53 53 51 48], p: [51 53 53 51 48]
+going recur
+recur(35530, 23558)
+tail: 35530, program: 35530
+l: 6
+output: 535530
+len output: 6
+tail: [48 51 53 53 51 48], p: [53 51 53 53 51 48]
+not equal
+output: 535530
+len output: 6
+tail: [48 51 53 53 51 48], p: [53 51 53 53 51 48]
+not equal
+output: 135530
+len output: 6
+tail: [48 51 53 53 51 48], p: [49 51 53 53 51 48]
+not equal
+output: 235530
+len output: 6
+tail: [48 51 53 53 51 48], p: [50 51 53 53 51 48]
+not equal
+output: 035530
+len output: 6
+tail: [48 51 53 53 51 48], p: [48 51 53 53 51 48]
+going recur
+recur(035530, 188468)
+tail: 035530, program: 035530
+l: 7
+output: 5035530
+len output: 7
+tail: [52 48 51 53 53 51 48], p: [53 48 51 53 53 51 48]
+not equal
+output: 5035530
+len output: 7
+tail: [52 48 51 53 53 51 48], p: [53 48 51 53 53 51 48]
+not equal
+output: 3035530
+len output: 7
+tail: [52 48 51 53 53 51 48], p: [51 48 51 53 53 51 48]
+not equal
+output: 6035530
+len output: 7
+tail: [52 48 51 53 53 51 48], p: [54 48 51 53 53 51 48]
+not equal
+output: 4035530
+len output: 7
+tail: [52 48 51 53 53 51 48], p: [52 48 51 53 53 51 48]
+going recur
+recur(4035530, 1507748)
+tail: 4035530, program: 4035530
+l: 8
+output: 54035530
+len output: 8
+tail: [49 52 48 51 53 53 51 48], p: [53 52 48 51 53 53 51 48]
+not equal
+output: 54035530
+len output: 8
+tail: [49 52 48 51 53 53 51 48], p: [53 52 48 51 53 53 51 48]
+not equal
+output: 34035530
+len output: 8
+tail: [49 52 48 51 53 53 51 48], p: [51 52 48 51 53 53 51 48]
+not equal
+output: 64035530
+len output: 8
+tail: [49 52 48 51 53 53 51 48], p: [54 52 48 51 53 53 51 48]
+not equal
+output: 04035530
+len output: 8
+tail: [49 52 48 51 53 53 51 48], p: [48 52 48 51 53 53 51 48]
+not equal
+output: 24035530
+len output: 8
+tail: [49 52 48 51 53 53 51 48], p: [50 52 48 51 53 53 51 48]
+not equal
+output: 14035530
+len output: 8
+tail: [49 52 48 51 53 53 51 48], p: [49 52 48 51 53 53 51 48]
+going recur
+recur(14035530, 12061990)
+tail: 14035530, program: 14035530
+l: 9
+output: 514035530
+len output: 9
+tail: [54 49 52 48 51 53 53 51 48], p: [53 49 52 48 51 53 53 51 48]
+not equal
+output: 514035530
+len output: 9
+tail: [54 49 52 48 51 53 53 51 48], p: [53 49 52 48 51 53 53 51 48]
+not equal
+output: 114035530
+len output: 9
+tail: [54 49 52 48 51 53 53 51 48], p: [49 49 52 48 51 53 53 51 48]
+not equal
+output: 214035530
+len output: 9
+tail: [54 49 52 48 51 53 53 51 48], p: [50 49 52 48 51 53 53 51 48]
+not equal
+output: 014035530
+len output: 9
+tail: [54 49 52 48 51 53 53 51 48], p: [48 49 52 48 51 53 53 51 48]
+not equal
+output: 314035530
+len output: 9
+tail: [54 49 52 48 51 53 53 51 48], p: [51 49 52 48 51 53 53 51 48]
+not equal
+output: 114035530
+len output: 9
+tail: [54 49 52 48 51 53 53 51 48], p: [49 49 52 48 51 53 53 51 48]
+not equal
+output: 614035530
+len output: 9
+tail: [54 49 52 48 51 53 53 51 48], p: [54 49 52 48 51 53 53 51 48]
+going recur
+recur(614035530, 96495927)
+tail: 614035530, program: 614035530
+l: 10
+output: 1614035530
+len output: 10
+tail: [52 54 49 52 48 51 53 53 51 48], p: [49 54 49 52 48 51 53 53 51 48]
+not equal
+output: 5614035530
+len output: 10
+tail: [52 54 49 52 48 51 53 53 51 48], p: [53 54 49 52 48 51 53 53 51 48]
+not equal
+output: 0614035530
+len output: 10
+tail: [52 54 49 52 48 51 53 53 51 48], p: [48 54 49 52 48 51 53 53 51 48]
+not equal
+output: 0614035530
+len output: 10
+tail: [52 54 49 52 48 51 53 53 51 48], p: [48 54 49 52 48 51 53 53 51 48]
+not equal
+output: 4614035530
+len output: 10
+tail: [52 54 49 52 48 51 53 53 51 48], p: [52 54 49 52 48 51 53 53 51 48]
+going recur
+recur(4614035530, 771967420)
+tail: 4614035530, program: 4614035530
+l: 11
+output: 54614035530
+len output: 11
+tail: [53 52 54 49 52 48 51 53 53 51 48], p: [53 52 54 49 52 48 51 53 53 51 48]
+going recur
+recur(54614035530, 6175739360)
+tail: 54614035530, program: 54614035530
+l: 12
+output: 554614035530
+len output: 12
+tail: [55 53 52 54 49 52 48 51 53 53 51 48], p: [53 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 554614035530
+len output: 12
+tail: [55 53 52 54 49 52 48 51 53 53 51 48], p: [53 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 754614035530
+len output: 12
+tail: [55 53 52 54 49 52 48 51 53 53 51 48], p: [55 53 52 54 49 52 48 51 53 53 51 48]
+going recur
+recur(754614035530, 49405914882)
+tail: 754614035530, program: 754614035530
+l: 13
+output: 5754614035530
+len output: 13
+tail: [49 55 53 52 54 49 52 48 51 53 53 51 48], p: [53 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 5754614035530
+len output: 13
+tail: [49 55 53 52 54 49 52 48 51 53 53 51 48], p: [53 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 5754614035530
+len output: 13
+tail: [49 55 53 52 54 49 52 48 51 53 53 51 48], p: [53 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 2754614035530
+len output: 13
+tail: [49 55 53 52 54 49 52 48 51 53 53 51 48], p: [50 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 1754614035530
+len output: 13
+tail: [49 55 53 52 54 49 52 48 51 53 53 51 48], p: [49 55 53 52 54 49 52 48 51 53 53 51 48]
+going recur
+recur(1754614035530, 395247319060)
+tail: 1754614035530, program: 1754614035530
+l: 14
+output: 51754614035530
+len output: 14
+tail: [49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [53 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 51754614035530
+len output: 14
+tail: [49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [53 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 31754614035530
+len output: 14
+tail: [49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [51 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 61754614035530
+len output: 14
+tail: [49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [54 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 41754614035530
+len output: 14
+tail: [49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [52 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 21754614035530
+len output: 14
+tail: [49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [50 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 21754614035530
+len output: 14
+tail: [49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [50 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 01754614035530
+len output: 14
+tail: [49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [48 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 11754614035530
+len output: 14
+tail: [49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [49 49 55 53 52 54 49 52 48 51 53 53 51 48]
+going recur
+recur(11754614035530, 3161978552488)
+tail: 11754614035530, program: 11754614035530
+l: 15
+output: 511754614035530
+len output: 15
+tail: [52 49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [53 49 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 511754614035530
+len output: 15
+tail: [52 49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [53 49 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 711754614035530
+len output: 15
+tail: [52 49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [55 49 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 611754614035530
+len output: 15
+tail: [52 49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [54 49 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 311754614035530
+len output: 15
+tail: [52 49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [51 49 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 411754614035530
+len output: 15
+tail: [52 49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [52 49 49 55 53 52 54 49 52 48 51 53 53 51 48]
+going recur
+recur(411754614035530, 25295828419909)
+tail: 411754614035530, program: 411754614035530
+l: 16
+output: 1411754614035530
+len output: 16
+tail: [50 52 49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [49 52 49 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 5411754614035530
+len output: 16
+tail: [50 52 49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [53 52 49 49 55 53 52 54 49 52 48 51 53 53 51 48]
+not equal
+output: 2411754614035530
+len output: 16
+tail: [50 52 49 49 55 53 52 54 49 52 48 51 53 53 51 48], p: [50 52 49 49 55 53 52 54 49 52 48 51 53 53 51 48]
+going recur
+recur(2411754614035530, 202366627359274)
+
