@@ -7,12 +7,15 @@ import (
 	"runtime"
 	"strings"
 
+	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
 )
 
 var (
 	_, caller, _, _ = runtime.Caller(0)
 	path            = filepath.Dir(caller)
+
+	boolValue = map[bool]int{false: 0, true: 1}
 )
 
 type day19 struct {
@@ -42,46 +45,36 @@ func NewDay19(opts ...day.Option) day19 {
 	return day19{patterns, designs}
 }
 
-func (m *memo1) memoPossible(design string, patterns []string) bool {
-	if _, ok := (*m)[design]; !ok {
-		(*m)[design] = m.possible(design, patterns)
-	}
-
-	return (*m)[design]
-}
-
 func (m *memo1) possible(design string, patterns []string) bool {
-	if design == "" {
-		return true
-	}
-
 	for _, pattern := range patterns {
-		if strings.HasPrefix(design, pattern) && m.memoPossible(design[len(pattern):], patterns) {
-			return true
+		if strings.HasPrefix(design, pattern) {
+			tail := design[len(pattern):]
+
+			if _, ok := (*m)[tail]; !ok {
+				(*m)[tail] = m.possible(tail, patterns)
+			}
+
+			if (*m)[tail] {
+				return true
+			}
 		}
 	}
 
 	return false
 }
 
-func (m *memo2) memoCountWays(design string, patterns []string) int {
-	if _, ok := (*m)[design]; !ok {
-		(*m)[design] = m.countWays(design, patterns)
-	}
-
-	return (*m)[design]
-}
-
 func (m *memo2) countWays(design string, patterns []string) int {
-	if design == "" {
-		return 1
-	}
-
 	result := 0
 
 	for _, pattern := range patterns {
 		if strings.HasPrefix(design, pattern) {
-			result += m.memoCountWays(design[len(pattern):], patterns)
+			tail := design[len(pattern):]
+
+			if _, ok := (*m)[tail]; !ok {
+				(*m)[tail] = m.countWays(tail, patterns)
+			}
+
+			result += (*m)[tail]
 		}
 	}
 
@@ -89,29 +82,19 @@ func (m *memo2) countWays(design string, patterns []string) int {
 }
 
 func (d day19) Part1() int {
-	sum := 0
+	memo := memo1{"": true}
 
-	memo := make(memo1)
-
-	for _, design := range d.designs {
-		if memo.possible(design, d.patterns) {
-			sum++
-		}
-	}
-
-	return sum
+	return conv.SumFunc(d.designs, func(design string) int {
+		return boolValue[memo.possible(design, d.patterns)]
+	})
 }
 
 func (d day19) Part2() int {
-	sum := 0
+	memo := memo2{"": 1}
 
-	memo := make(memo2)
-
-	for _, design := range d.designs {
-		sum += memo.countWays(design, d.patterns)
-	}
-
-	return sum
+	return conv.SumFunc(d.designs, func(design string) int {
+		return memo.countWays(design, d.patterns)
+	})
 }
 
 func main() {
