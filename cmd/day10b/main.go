@@ -79,7 +79,7 @@ func (d day10b) peaks(trailhead grid.Point) int {
 
 	peaks := 0
 
-	for p := range d.grid.Bfs(trailhead, appender) {
+	for p := range grid.Bfs(trailhead, appender) {
 		if d.grid.At(p) == '9' {
 			peaks++
 		}
