@@ -21,3 +21,10 @@ func SumFunc[T any](s []T, fn func(T) int) int {
 
 	return result
 }
+
+func Abs(num int) int {
+	if num < 0 {
+		return -num
+	}
+	return num
+}

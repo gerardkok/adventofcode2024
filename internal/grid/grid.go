@@ -90,7 +90,31 @@ func Bfs(start Point, appendSeq func(p Point) iter.Seq[Point]) iter.Seq[Point] {
 	}
 }
 
-func fetch[T comparable](d map[T]int, p T) int {
+func Bfs2[T comparable](start T, neighbours func(T) []T) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		todo := []T{start}
+		seen := make(map[T]struct{})
+
+		for len(todo) > 0 {
+			p := todo[0]
+			todo = todo[1:]
+
+			if _, ok := seen[p]; ok {
+				continue
+			}
+
+			if !yield(p) {
+				return
+			}
+
+			seen[p] = struct{}{}
+
+			todo = append(todo, neighbours(p)...)
+		}
+	}
+}
+
+func get[T comparable](d map[T]int, p T) int {
 	if v, ok := d[p]; ok {
 		return v
 	}
@@ -117,13 +141,38 @@ func ShortestPath[T comparable](source T, neighbours func(T) []Edge[T], isEnd fu
 		for _, edge := range neighbours(u) {
 			v := edge.To
 			weight := edge.Weight
-			if dist[u]+weight < fetch(dist, v) {
+			if dist[u]+weight < get(dist, v) {
 				dist[v] = dist[u] + weight
 				heap.Push(&pq, &Item[T]{vertex: v, dist: dist[v]})
 				prev[v] = u
 			}
 		}
 	}
+}
+
+func Dijkstra[T comparable](source T, neighbours func(T) []Edge[T]) (map[T]int, map[T]T) {
+	dist := map[T]int{source: 0}
+	prev := make(map[T]T)
+
+	pq := make(PriorityQueue[T], 0)
+	heap.Init(&pq)
+	heap.Push(&pq, &Item[T]{vertex: source, dist: 0})
+
+	for pq.Len() > 0 {
+		u := heap.Pop(&pq).(*Item[T]).vertex
+
+		for _, edge := range neighbours(u) {
+			v := edge.To
+			weight := edge.Weight
+			if dist[u]+weight < get(dist, v) {
+				dist[v] = dist[u] + weight
+				heap.Push(&pq, &Item[T]{vertex: v, dist: dist[v]})
+				prev[v] = u
+			}
+		}
+	}
+
+	return dist, prev
 }
 
 func (g Grid[T]) Neighbours4(p Point) iter.Seq[Point] {

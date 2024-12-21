@@ -129,46 +129,46 @@ func (d day16) path(p map[state]map[state]struct{}, e state) map[tile]struct{} {
 	return result
 }
 
-func (d day16) singlePathDijkstra2() (map[state]map[state]struct{}, []state) {
-	q := newQueue()
-	q.enqueue(d.start, 0)
-	seen := make(map[state]struct{})
-	dist := make(visited)
-	dist[d.start] = 0
-	prev := make(map[state]map[state]struct{})
+// func (d day16) singlePathDijkstra2() (map[state]map[state]struct{}, []state) {
+// 	q := newQueue()
+// 	q.enqueue(d.start, 0)
+// 	seen := make(map[state]struct{})
+// 	dist := make(visited)
+// 	dist[d.start] = 0
+// 	prev := make(map[state]map[state]struct{})
 
-	min := math.MaxInt
-	var endStates []state
+// 	min := math.MaxInt
+// 	var endStates []state
 
-	for {
-		s, cost := q.dequeue()
-		if cost > min {
-			return prev, endStates
-		}
-		if s.x == d.end.x && s.y == d.end.y {
-			min = cost
-			endStates = append(endStates, s)
-		}
+// 	for {
+// 		s, cost := q.dequeue()
+// 		if cost > min {
+// 			return prev, endStates
+// 		}
+// 		if s.x == d.end.x && s.y == d.end.y {
+// 			min = cost
+// 			endStates = append(endStates, s)
+// 		}
 
-		seen[s] = struct{}{}
+// 		seen[s] = struct{}{}
 
-		for _, newNode := range d.moves(s) {
-			if _, ok := seen[newNode.state]; ok {
-				continue
-			}
+// 		for _, newNode := range d.moves(s) {
+// 			if _, ok := seen[newNode.state]; ok {
+// 				continue
+// 			}
 
-			c := cost + newNode.cost
-			if c <= dist.get(newNode.state) {
-				dist[newNode.state] = c
-				q.enqueue(newNode.state, c)
-				if _, ok := prev[newNode.state]; !ok {
-					prev[newNode.state] = make(map[state]struct{})
-				}
-				prev[newNode.state][s] = struct{}{}
-			}
-		}
-	}
-}
+// 			c := cost + newNode.cost
+// 			if c <= dist.get(newNode.state) {
+// 				dist[newNode.state] = c
+// 				q.enqueue(newNode.state, c)
+// 				if _, ok := prev[newNode.state]; !ok {
+// 					prev[newNode.state] = make(map[state]struct{})
+// 				}
+// 				prev[newNode.state][s] = struct{}{}
+// 			}
+// 		}
+// 	}
+// }
 
 func (d day16) dijkstra() int {
 	dist, _, _ := grid.ShortestPath(d.start, d.neighbours, d.isStop)
@@ -206,14 +206,15 @@ func (d day16) Part1() int {
 }
 
 func (d day16) Part2() int {
-	p, e := d.singlePathDijkstra2()
-	fmt.Println(p)
+	// p, e := d.singlePathDijkstra2()
+	// fmt.Println(p)
 
-	path := d.paths(p, e)
+	// path := d.paths(p, e)
 
-	fmt.Println(path)
+	// fmt.Println(path)
 
-	return path
+	// return path
+	return 0
 }
 
 func main() {
