@@ -20,7 +20,7 @@ func TestExamplePart2(t *testing.T) {
 	t.Parallel()
 	d := NewDay21(day.WithInput("example.txt"))
 
-	want := 0
+	want := 154115708116294
 	got := d.Part2()
 	if want != got {
 		t.Errorf("want %d, got %d", want, got)
