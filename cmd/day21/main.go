@@ -13,6 +13,8 @@ import (
 
 	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
+
+	"github.com/cespare/xxhash/v2"
 )
 
 type keypad [][]byte
@@ -28,6 +30,13 @@ type move struct {
 type day21 struct {
 	codes []string
 }
+
+type seq struct {
+	xxh   uint64
+	level int
+}
+
+type memo map[seq]int
 
 type keypadType int
 
@@ -219,38 +228,34 @@ func useKeypad(level int) keypadType {
 	return directional
 }
 
-func (d day21) length(sequence []byte, level, nRobots int) string {
-	//fmt.Printf("sequence: %s, level: %d\n", string(sequence), level)
+func (m *memo) length(sequence []byte, level, nRobots int) int {
 	if level > nRobots {
-		// human operator
-		//fmt.Printf("human operator: %s\n", string(sequence))
-		return string(sequence)
+		return len(sequence)
 	}
 
 	keypad := useKeypad(level)
 
-	seq := ""
+	sum := 0
 	prev := byte('A')
 	for _, ch := range sequence {
-		//fmt.Printf("considering char: %c\n", ch)
 		shortest := math.MaxInt
-		shortestOpt := ""
 		for _, option := range keypad.options(prev, ch) {
-			optA := append(option, 'A')
-			//fmt.Printf("optA: %s\n", string(optA))
-			optSeq := d.length(optA, level+1, nRobots)
-			l := len(optSeq)
-			if l < shortest {
-				shortest = l
-				shortestOpt = optSeq
+			newSeq := append(option, 'A')
+			xxh := xxhash.Sum64(newSeq)
+			s := seq{xxh, level + 1}
+			if _, ok := (*m)[s]; !ok {
+				(*m)[s] = m.length(append(option, 'A'), level+1, nRobots)
+			}
+
+			if (*m)[s] < shortest {
+				shortest = (*m)[s]
 			}
 		}
-		seq += shortestOpt
+		sum += shortest
 		prev = ch
 	}
 
-	//fmt.Printf("seq found: %s\n", string(seq))
-	return seq
+	return sum
 }
 
 func codeToInt(code string) int {
@@ -258,24 +263,21 @@ func codeToInt(code string) int {
 }
 
 func (d day21) Part1() int {
+	memo := memo{}
 	sum := 0
 	for _, code := range d.codes {
-		//		fmt.Printf("code: %s\n", code)
-		l := d.length([]byte(code), 0, 2)
-		fmt.Printf("code: %d, len: %d\n", codeToInt(code), len(l))
-		sum += codeToInt(code) * len(l)
-		//		fmt.Println(l)
-		//		fmt.Printf("len: %d\n", len(l))
+		length := memo.length([]byte(code), 0, 2)
+		sum += codeToInt(code) * length
 	}
 	return sum
 }
 
 func (d day21) Part2() int {
+	memo := memo{}
 	sum := 0
 	for _, code := range d.codes {
-		l := d.length([]byte(code), 0, 25)
-		fmt.Printf("code: %d, len: %d\n", codeToInt(code), len(l))
-		sum += codeToInt(code) * len(l)
+		length := memo.length([]byte(code), 0, 25)
+		sum += codeToInt(code) * length
 	}
 	return sum
 }
