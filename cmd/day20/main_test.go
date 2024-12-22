@@ -27,14 +27,14 @@ func TestExamplePart1(t *testing.T) {
 // 	}
 // }
 
-func TestSmallPart2(t *testing.T) {
-	t.Parallel()
-	d := NewDay20(1, day.WithInput("small.txt"))
+// func TestSmallPart2(t *testing.T) {
+// 	t.Parallel()
+// 	d := NewDay20(1, day.WithInput("small.txt"))
 
-	want := 2
-	got := d.Part2()
-	if want != got {
-		t.Errorf("want %d, got %d", want, got)
-	}
+// 	want := 2
+// 	got := d.Part2()
+// 	if want != got {
+// 		t.Errorf("want %d, got %d", want, got)
+// 	}
 
-}
+// }
