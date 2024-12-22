@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"iter"
 	"math"
 	"os"
 	"path/filepath"
@@ -83,19 +82,6 @@ var (
 			'^': {0, 1},
 		},
 	}
-
-	numericalGap   = key{3, 0}
-	directionalGap = key{0, 0}
-
-	moves = map[int]map[int][]string{
-		-3: {-2: {"<<^^^", "^^^<<"}, -1: {"<^^^", "^^^<"}, 0: {"^^^"}, 1: {">^^^", "^^^>"}, 2: {">>^^^", "^^^>>"}},
-		-2: {-2: {"<<^^", "^^<<"}, -1: {"<^^", "^^<"}, 0: {"^^"}, 1: {">^^", "^^>"}, 2: {">>^^", "^^>>"}},
-		-1: {-2: {"<<^", "^<<"}, -1: {"<^", "^<"}, 0: {"^"}, 1: {">^", "^>"}, 2: {">>^", "^>>"}},
-		0:  {-2: {"<<"}, -1: {"<"}, 0: {""}, 1: {">"}, 2: {">>"}},
-		1:  {-2: {"<<v", "v<<"}, -1: {"<v", "v<"}, 0: {"v"}, 1: {">v", "v>"}, 2: {">>v", "v>>"}},
-		2:  {-2: {"<<vv", "vv<<"}, -1: {"<vv", "vv<"}, 0: {"vv"}, 1: {">vv", "vv>"}, 2: {">>vv", "vv>>"}},
-		3:  {-2: {"<<vvv", "vvv<<"}, -1: {"<vvv", "vvv<"}, 0: {"vvv"}, 1: {">vvv", "vvv>"}, 2: {">>vvv", "vvv>>"}},
-	}
 )
 
 func NewDay21(opts ...day.Option) day21 {
@@ -112,64 +98,6 @@ func printKeypadOpts(keypadOpts map[move][]string) {
 		fmt.Printf("%c -> %c: %s\n", k.from, k.to, opts)
 	}
 }
-
-func (k keypad) keys() iter.Seq[key] {
-	return func(yield func(key) bool) {
-		for r, row := range k {
-			for c, ch := range row {
-				if ch == ' ' {
-					continue
-				}
-
-				if !yield(key{r, c}) {
-					return
-				}
-			}
-		}
-	}
-}
-
-func (kpt keypadType) overGap(from, to key) bool {
-	if kpt == numerical {
-		return key{from.r, to.c} == numericalGap || key{to.r, from.c} == numericalGap
-	}
-
-	return key{from.r, to.c} == directionalGap || key{to.r, from.c} == directionalGap
-}
-
-// func (kpt keypadType) optionsMap() map[move][]string {
-// 	k := keypads[kpt]
-
-// 	result := make(map[move][]string)
-
-// 	for f := range k.keys() {
-// 		for t := range k.keys() {
-// 			if f == t {
-// 				continue
-// 			}
-
-// 			from := k[f.r][f.c]
-// 			to := k[t.r][t.c]
-
-// 			move := move{from, to}
-
-// 			dr := t.r - f.r
-// 			dc := t.c - f.c
-
-// 			result[move] = moves[dr][dc]
-
-// 			// for i, opt := range moves[dr][dc] {
-// 			// 	if kpt.overGap(f, t) && i == 0 {
-// 			// 		continue
-// 			// 	}
-
-// 			// 	result[move] = append(result[move], opt)
-// 			// }
-// 		}
-// 	}
-
-// 	return result
-// }
 
 func horizontal(dc int) []byte {
 	c := byte('<')
@@ -211,11 +139,6 @@ func (kpt keypadType) options(from, to byte) [][]byte {
 	if keypads[kpt][f.r][t.c] != ' ' { // don't go vertical first}
 		result = append(result, slices.Concat(horizontal(dc), vertical(dr)))
 	}
-
-	// fmt.Printf("from: %c, to: %c\n", from, to)
-	// for i, opt := range result {
-	// 	fmt.Printf("[%d] %s\n", i, string(opt))
-	// }
 
 	return result
 }
