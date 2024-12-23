@@ -2,7 +2,10 @@ package conv
 
 // convenience
 
-import "strconv"
+import (
+	"iter"
+	"strconv"
+)
 
 func MustAtoi(s string) int {
 	result, err := strconv.Atoi(s)
@@ -17,6 +20,16 @@ func SumFunc[T any](s []T, fn func(T) int) int {
 
 	for _, e := range s {
 		result += fn(e)
+	}
+
+	return result
+}
+
+func Sum(seq iter.Seq[int]) int {
+	result := 0
+
+	for i := range seq {
+		result += i
 	}
 
 	return result
