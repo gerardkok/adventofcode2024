@@ -73,30 +73,6 @@ func (d day23) networks() iter.Seq[[3]string] {
 	}
 }
 
-// BronKerbosch(P):
-//     S := empty stack
-//     S.push({}, P, {})
-//     while S is not empty:
-//         R, P, X := S.pop()
-//         if P and X are both empty:
-//             report R as a maximal clique
-//         if P is not empty:
-//             v := some vertex in P
-//             S.push(R, P \ {v}, X ⋃ {v})
-//             S.push(R ⋃ {v}, P ⋂ N(v), X ⋂ N(v))
-
-func except(s map[string]struct{}, v string) map[string]struct{} {
-	result := make(map[string]struct{})
-
-	for k := range s {
-		if k != v {
-			result[k] = struct{}{}
-		}
-	}
-
-	return result
-}
-
 func intersect(s, t map[string]struct{}) map[string]struct{} {
 	result := make(map[string]struct{})
 
@@ -112,14 +88,12 @@ func intersect(s, t map[string]struct{}) map[string]struct{} {
 func include(s map[string]struct{}, v string) map[string]struct{} {
 	result := map[string]struct{}{v: {}}
 
-	for k := range s {
-		result[k] = struct{}{}
-	}
+	maps.Copy(result, s)
 
 	return result
 }
 
-func (d day23) bronKerbosch(R map[string]struct{}, P, X map[string]struct{}) iter.Seq[map[string]struct{}] {
+func (d day23) bronKerbosch(R, P, X map[string]struct{}) iter.Seq[map[string]struct{}] {
 	return func(yield func(map[string]struct{}) bool) {
 		if len(P) == 0 && len(X) == 0 {
 			if !yield(R) {
@@ -127,15 +101,16 @@ func (d day23) bronKerbosch(R map[string]struct{}, P, X map[string]struct{}) ite
 			}
 		}
 
-		vertices := slices.Collect(maps.Keys(P))
-		for _, v := range vertices {
+		// stay on safe side, and construct new slice of keys of P, because P will be modified through the loop
+		for _, v := range slices.Collect(maps.Keys(P)) {
 			for c := range d.bronKerbosch(include(R, v), intersect(P, d.connections[v]), intersect(X, d.connections[v])) {
 				if !yield(c) {
 					return
 				}
 			}
-			P = except(P, v)
-			X = include(X, v)
+
+			delete(P, v)
+			X[v] = struct{}{}
 		}
 	}
 }
