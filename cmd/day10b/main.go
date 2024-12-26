@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 
 	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
@@ -73,14 +74,14 @@ func (d day10b) rating(p grid.Point) int {
 }
 
 func (d day10b) peaks(trailhead grid.Point) int {
-	appender := func(p grid.Point) iter.Seq[grid.Point] {
-		return d.up(p)
+	appender := func(p grid.Point) []grid.Point {
+		return slices.Collect(d.up(p))
 	}
 
 	peaks := 0
 
 	for p := range grid.Bfs(trailhead, appender) {
-		if d.grid.At(p) == '9' {
+		if d.grid.At(p[0]) == '9' {
 			peaks++
 		}
 	}
