@@ -3,16 +3,14 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	pq "github.com/emirpasic/gods/queues/priorityqueue"
-
 	"adventofcode2024/internal/conv"
 	"adventofcode2024/internal/day"
+	"adventofcode2024/internal/grid"
 )
 
 var (
@@ -30,43 +28,8 @@ type spot struct {
 	r, c int
 }
 
-type queue struct {
-	*pq.Queue
-}
-
-type node struct {
-	spot spot
-	cost int
-}
-
 type direction struct {
 	dr, dc int
-}
-
-type visited map[spot]int
-
-func (v visited) get(s spot) int {
-	if v, ok := v[s]; ok {
-		return v
-	}
-	return math.MaxInt
-}
-
-func newQueue() queue {
-	q := pq.NewWith(func(a, b any) int {
-		return a.(node).cost - b.(node).cost
-	})
-	return queue{q}
-}
-
-func (q *queue) enqueue(s spot, cost int) {
-	i := node{s, cost}
-	q.Enqueue(i)
-}
-
-func (q *queue) dequeue() (spot, int) {
-	i, _ := q.Dequeue()
-	return i.(node).spot, i.(node).cost
 }
 
 func parseGrid(lines []string, size, fallenBytes int) ([][]byte, []spot) {
@@ -99,65 +62,60 @@ func NewDay18(size, fallenBytes int, opts ...day.Option) day18 {
 	return day18{grid, spots, fallenBytes}
 }
 
-func (d day18) singlePathDijkstra() int {
-	q := newQueue()
-	q.enqueue(spot{0, 0}, 0)
-	seen := make(map[spot]struct{})
-	dist := make(visited)
-	dist[spot{0, 0}] = 0
+func (s spot) to(d direction) spot {
+	return spot{s.r + d.dr, s.c + d.dc}
+}
 
-	for q.Size() > 0 {
-		s, cost := q.dequeue()
-		if s.r == len(d.grid)-1 && s.c == len(d.grid[0])-1 {
-			return cost
+func (d day18) offGrid(s spot) bool {
+	return s.r < 0 || s.r >= len(d.grid) || s.c < 0 || s.c >= len(d.grid[0])
+}
+
+func (d day18) shortestPath() int {
+	start := spot{0, 0}
+	end := spot{len(d.grid) - 1, len(d.grid[0]) - 1}
+
+	dist := map[spot]int{start: 0}
+
+	for p := range grid.Bfs(start, d.neighbours) {
+		if p[0] == start {
+			continue
 		}
-
-		seen[s] = struct{}{}
-
-		for _, newNode := range d.moves(s) {
-			if _, ok := seen[newNode.spot]; ok {
-				continue
-			}
-
-			c := cost + newNode.cost
-			if c < dist.get(newNode.spot) {
-				dist[newNode.spot] = c
-				q.enqueue(newNode.spot, c)
-			}
+		dist[p[0]] = dist[p[1]] + 1
+		if p[0] == end {
+			return dist[p[0]]
 		}
 	}
 
 	return -1
 }
 
-func (d day18) moves(s spot) []node {
-	var result []node
+func (d day18) neighbours(s spot) []spot {
+	var result []spot
 
 	for _, dir := range []direction{{0, 1}, {1, 0}, {0, -1}, {-1, 0}} {
-		r := s.r + dir.dr
-		c := s.c + dir.dc
-		if r < 0 || r >= len(d.grid) || c < 0 || c >= len(d.grid[0]) {
+		to := s.to(dir)
+		if d.offGrid(to) {
 			continue
 		}
 
-		if d.grid[r][c] == '#' {
+		if d.grid[to.r][to.c] == '#' {
 			continue
 		}
 
-		result = append(result, node{spot{r, c}, 1})
+		result = append(result, to)
 	}
 
 	return result
 }
 
 func (d day18) Part1() int {
-	return d.singlePathDijkstra()
+	return d.shortestPath()
 }
 
 func (d day18) Part2() string {
 	for _, s := range d.spots[d.fallen:] {
 		d.grid[s.r][s.c] = '#'
-		if d.singlePathDijkstra() == -1 {
+		if d.shortestPath() == -1 {
 			output := fmt.Sprintf("%d,%d", s.c, s.r)
 			return output
 		}
