@@ -53,31 +53,48 @@ func NewDay20(minSaving int, opts ...day.Option) day20 {
 	return day20{track, start, end, minSaving, 0}
 }
 
-func (d day20) neighbours(p grid.Point) []grid.Edge[grid.Point] {
-	var result []grid.Edge[grid.Point]
+func (d day20) neighbours(from grid.Point) []grid.Point {
+	var result []grid.Point
 
 	for _, dir := range []grid.Direction{{Dx: 0, Dy: 1}, {Dx: 1, Dy: 0}, {Dx: 0, Dy: -1}, {Dx: -1, Dy: 0}} {
-		x, y := p.X+dir.Dx, p.Y+dir.Dy
-		if d.track[x][y] == '#' {
+		to := from.To(dir)
+		if d.track[to.X][to.Y] == '#' {
 			continue
 		}
 
-		result = append(result, grid.Edge[grid.Point]{To: grid.Point{X: x, Y: y}, Weight: 1})
+		result = append(result, to)
 	}
 
 	return result
 }
 
-func (d *day20) cheatablePaths(distStart, distEnd map[grid.Point]int, maxCheat int) map[cheat]int {
-	result := make(map[cheat]int)
+func (d day20) bfs(start grid.Point) map[grid.Point]int {
+	dist := map[grid.Point]int{start: 0}
 
-	for cheatStart, distCheatStart := range distStart {
-		for cheatEnd, distCheatEnd := range distEnd {
-			cheat := cheat{cheatStart, cheatEnd}
-			cheatDist := conv.Abs(cheatEnd.X-cheatStart.X) + conv.Abs(cheatEnd.Y-cheatStart.Y)
-			pathDist := distCheatStart + distCheatEnd + cheatDist
-			if cheatDist <= maxCheat {
-				result[cheat] = pathDist
+	for p := range grid.Bfs(start, d.neighbours) {
+		if p[0] == start {
+			continue
+		}
+
+		dist[p[0]] = dist[p[1]] + 1
+	}
+
+	return dist
+}
+
+func (d day20) cheatablePaths(distStart, distEnd map[grid.Point]int, maxCheat, maxLength int) int {
+	result := 0
+
+	for start, sDist := range distStart {
+		for dx := -maxCheat; dx <= maxCheat; dx++ {
+			for dy := -maxCheat + conv.Abs(dx); dy <= maxCheat-conv.Abs(dx); dy++ {
+				end := start.To(grid.Direction{Dx: dx, Dy: dy})
+				if eDist, ok := distEnd[end]; ok {
+					dist := sDist + eDist + conv.Abs(dx) + conv.Abs(dy)
+					if dist <= maxLength {
+						result++
+					}
+				}
 			}
 		}
 	}
@@ -86,41 +103,21 @@ func (d *day20) cheatablePaths(distStart, distEnd map[grid.Point]int, maxCheat i
 }
 
 func (d day20) Part1() int {
-	distStart, _ := grid.Dijkstra(d.start, d.neighbours)
-	distEnd, _ := grid.Dijkstra(d.end, d.neighbours)
+	distStart := d.bfs(d.start)
+	distEnd := d.bfs(d.end)
 
 	shortest := distEnd[d.start]
 
-	paths := d.cheatablePaths(distStart, distEnd, 2)
-
-	sum := 0
-
-	for _, length := range paths {
-		if length <= shortest-d.minSaving {
-			sum++
-		}
-	}
-
-	return sum
+	return d.cheatablePaths(distStart, distEnd, 2, shortest-d.minSaving)
 }
 
 func (d day20) Part2() int {
-	distStart, _ := grid.Dijkstra(d.start, d.neighbours)
-	distEnd, _ := grid.Dijkstra(d.end, d.neighbours)
+	distStart := d.bfs(d.start)
+	distEnd := d.bfs(d.end)
 
 	shortest := distEnd[d.start]
 
-	paths := d.cheatablePaths(distStart, distEnd, 20)
-
-	sum := 0
-
-	for _, length := range paths {
-		if length <= shortest-d.minSaving {
-			sum++
-		}
-	}
-
-	return sum
+	return d.cheatablePaths(distStart, distEnd, 20, shortest-d.minSaving)
 }
 
 func main() {
