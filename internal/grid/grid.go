@@ -68,21 +68,21 @@ func (g Grid[T]) At(p Point) T {
 func Bfs[T comparable](start T, neighbours func(T) []T) iter.Seq[[2]T] {
 	return func(yield func([2]T) bool) {
 		todo := []T{start}
-		prev := make(map[T]T)
+		parent := make(map[T]T)
 
 		for len(todo) > 0 {
 			p := todo[0]
 			todo = todo[1:]
 
-			if !yield([2]T{p, prev[p]}) {
+			if !yield([2]T{p, parent[p]}) {
 				return
 			}
 
 			for _, n := range neighbours(p) {
-				if _, ok := prev[n]; ok {
+				if _, ok := parent[n]; ok {
 					continue
 				}
-				prev[n] = p
+				parent[n] = p
 				todo = append(todo, n)
 			}
 		}
@@ -97,7 +97,7 @@ func get[T comparable](d map[T]int, p T) int {
 	return math.MaxInt
 }
 
-func Dijkstra[T comparable](source T, neighbours func(T) []Edge[T]) (map[T]int, map[T]T) {
+func ShortestPath[T comparable](source T, neighbours func(T) []Edge[T]) (map[T]int, map[T]T) {
 	dist := map[T]int{source: 0}
 	prev := make(map[T]T)
 
@@ -115,6 +115,34 @@ func Dijkstra[T comparable](source T, neighbours func(T) []Edge[T]) (map[T]int, 
 				dist[v] = dist[u] + weight
 				heap.Push(&pq, &Item[T]{vertex: v, dist: dist[v]})
 				prev[v] = u
+			}
+		}
+	}
+
+	return dist, prev
+}
+
+func AllShortestPaths[T comparable](source T, neighbours func(T) []Edge[T]) (map[T]int, map[T]map[T]struct{}) {
+	dist := map[T]int{source: 0}
+	prev := make(map[T]map[T]struct{})
+
+	pq := make(PriorityQueue[T], 0)
+	heap.Init(&pq)
+	heap.Push(&pq, &Item[T]{vertex: source, dist: 0})
+
+	for pq.Len() > 0 {
+		u := heap.Pop(&pq).(*Item[T]).vertex
+
+		for _, edge := range neighbours(u) {
+			v := edge.To
+			weight := edge.Weight
+			if dist[u]+weight <= get(dist, v) {
+				dist[v] = dist[u] + weight
+				heap.Push(&pq, &Item[T]{vertex: v, dist: dist[v]})
+				if _, ok := prev[v]; !ok {
+					prev[v] = make(map[T]struct{})
+				}
+				prev[v][u] = struct{}{}
 			}
 		}
 	}

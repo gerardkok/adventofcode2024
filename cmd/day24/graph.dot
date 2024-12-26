@@ -13,13 +13,13 @@ digraph {
     "z00" [label="z00"];
     "z01" [label="z01"];
     "z02" [label="z02"];
-    "x00" -> "x00 AND y00" [label="x00"];
-    "x00 AND y00" -> "z00" [label="z00"];
-    "x02" -> "x02 OR y02" [label="x02"];
-    "y02" -> "x02 OR y02" [label="y02"];
     "x02 OR y02" -> "z02" [label="z02"];
-    "y00" -> "x00 AND y00" [label="y00"];
+    "x00" -> "x00 AND y00" [label="x00"];
     "x01" -> "x01 XOR y01" [label="x01"];
-    "y01" -> "x01 XOR y01" [label="y01"];
     "x01 XOR y01" -> "z01" [label="z01"];
+    "x02" -> "x02 OR y02" [label="x02"];
+    "y00" -> "x00 AND y00" [label="y00"];
+    "x00 AND y00" -> "z00" [label="z00"];
+    "y01" -> "x01 XOR y01" [label="y01"];
+    "y02" -> "x02 OR y02" [label="y02"];
 }
