@@ -16,7 +16,7 @@ var (
 	_, caller, _, _ = runtime.Caller(0)
 	path            = filepath.Dir(caller)
 
-	turnMap = map[direction][2]direction{
+	turns = map[direction][2]direction{
 		{0, 1}:  {{-1, 0}, {1, 0}},
 		{1, 0}:  {{0, -1}, {0, 1}},
 		{0, -1}: {{-1, 0}, {1, 0}},
@@ -93,13 +93,11 @@ func (d day16) endState(dist map[state]int) state {
 	shortest := math.MaxInt
 	var result state
 
-	for _, dir := range []direction{{0, 1}, {1, 0}, {0, -1}, {-1, 0}} {
+	for dir := range maps.Keys(turns) {
 		end := state{d.end.x, d.end.y, dir}
-		if distEnd, ok := dist[end]; ok {
-			if distEnd < shortest {
-				shortest = distEnd
-				result = end
-			}
+		if distEnd, ok := dist[end]; ok && distEnd < shortest {
+			shortest = distEnd
+			result = end
 		}
 	}
 
@@ -120,23 +118,19 @@ func (s state) turn(d direction) state {
 	return state{s.x, s.y, d}
 }
 
-func (d day16) scanAhead(s state) byte {
-	return d.grid[s.x+s.direction.dx][s.y+s.direction.dy]
-}
-
-func (d day16) scanDirection(s state, dir direction) byte {
+func (d day16) scan(s state, dir direction) byte {
 	return d.grid[s.x+dir.dx][s.y+dir.dy]
 }
 
 func (d day16) neighbours(s state) []grid.Edge[state] {
 	var result []grid.Edge[state]
 
-	if d.scanAhead(s) != '#' {
+	if d.scan(s, s.direction) != '#' {
 		result = append(result, grid.Edge[state]{To: s.forward(), Weight: 1})
 	}
 
-	for _, dir := range turnMap[s.direction] {
-		if d.scanDirection(s, dir) != '#' {
+	for _, dir := range turns[s.direction] {
+		if d.scan(s, dir) != '#' {
 			result = append(result, grid.Edge[state]{To: s.turn(dir), Weight: 1000})
 		}
 	}
