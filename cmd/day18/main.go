@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,9 +18,9 @@ var (
 )
 
 type day18 struct {
-	grid   [][]byte
-	spots  []spot
-	fallen int
+	spots        []spot
+	corrupted    map[spot]bool
+	size, fallen int
 }
 
 type spot struct {
@@ -32,34 +31,28 @@ type direction struct {
 	dr, dc int
 }
 
-func parseGrid(lines []string, size, fallenBytes int) ([][]byte, []spot) {
-	result := make([][]byte, size)
-	var spots []spot
-
-	for i := range result {
-		result[i] = bytes.Repeat([]byte{'.'}, size)
-	}
+func parseGrid(lines []string, fallen int) ([]spot, map[spot]bool) {
+	spots := make([]spot, len(lines))
+	corrupted := make(map[spot]bool, len(lines))
 
 	for i, line := range lines {
 		c, r, _ := strings.Cut(line, ",")
 		s := spot{conv.MustAtoi(r), conv.MustAtoi(c)}
-		spots = append(spots, s)
-		if i < fallenBytes {
-			result[s.r][s.c] = '#'
-		}
+		spots[i] = s
+		corrupted[s] = i < fallen
 	}
 
-	return result, spots
+	return spots, corrupted
 }
 
-func NewDay18(size, fallenBytes int, opts ...day.Option) day18 {
+func NewDay18(size, fallen int, opts ...day.Option) day18 {
 	input := day.NewDayInput(path, opts...)
 
 	lines := input.ReadLines()
 
-	grid, spots := parseGrid(lines, size, fallenBytes)
+	spots, corrupted := parseGrid(lines, fallen)
 
-	return day18{grid, spots, fallenBytes}
+	return day18{spots, corrupted, size, fallen}
 }
 
 func (s spot) to(d direction) spot {
@@ -67,12 +60,12 @@ func (s spot) to(d direction) spot {
 }
 
 func (d day18) offGrid(s spot) bool {
-	return s.r < 0 || s.r >= len(d.grid) || s.c < 0 || s.c >= len(d.grid[0])
+	return s.r < 0 || s.r >= d.size || s.c < 0 || s.c >= d.size
 }
 
 func (d day18) shortestPath() int {
 	start := spot{0, 0}
-	end := spot{len(d.grid) - 1, len(d.grid[0]) - 1}
+	end := spot{d.size - 1, d.size - 1}
 
 	dist := map[spot]int{start: 0}
 
@@ -98,7 +91,7 @@ func (d day18) neighbours(s spot) []spot {
 			continue
 		}
 
-		if d.grid[to.r][to.c] == '#' {
+		if d.corrupted[to] {
 			continue
 		}
 
@@ -113,14 +106,22 @@ func (d day18) Part1() int {
 }
 
 func (d day18) Part2() string {
-	for _, s := range d.spots[d.fallen:] {
-		d.grid[s.r][s.c] = '#'
+	lo, hi := d.fallen, len(d.spots)
+	for lo < hi {
+		t := (lo+hi)/2 + 1
+		for _, s := range d.spots[lo:t] {
+			d.corrupted[s] = true
+		}
 		if d.shortestPath() == -1 {
-			output := fmt.Sprintf("%d,%d", s.c, s.r)
-			return output
+			hi = t - 1
+		} else {
+			lo = t
+		}
+		for _, s := range d.spots[lo:t] {
+			d.corrupted[s] = false
 		}
 	}
-	return "71,71"
+	return fmt.Sprintf("%d,%d", d.spots[lo].c, d.spots[lo].r)
 }
 
 func main() {
