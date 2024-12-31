@@ -59,6 +59,10 @@ func (s spot) to(d direction) spot {
 	return spot{s.r + d.dr, s.c + d.dc}
 }
 
+func (s spot) String() string {
+	return fmt.Sprintf("%d,%d", s.c, s.r)
+}
+
 func (d day18) offGrid(s spot) bool {
 	return s.r < 0 || s.r >= d.size || s.c < 0 || s.c >= d.size
 }
@@ -121,7 +125,7 @@ func (d day18) Part2() string {
 			d.corrupted[s] = false
 		}
 	}
-	return fmt.Sprintf("%d,%d", d.spots[lo].c, d.spots[lo].r)
+	return d.spots[lo].String()
 }
 
 func main() {
