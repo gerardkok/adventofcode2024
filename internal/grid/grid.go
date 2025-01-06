@@ -18,9 +18,9 @@ func (p Point) To(d Direction) Point {
 	return Point{p.X + d.Dx, p.Y + d.Dy}
 }
 
-type Edge[T any] struct {
-	To     T
-	Weight int
+type Edge[T any] interface {
+	To() T
+	Weight() int
 }
 
 type Item[T any] struct {
@@ -89,14 +89,6 @@ func Bfs[T comparable](start T, neighbours func(T) []T) iter.Seq[[2]T] {
 	}
 }
 
-func get[T comparable](d map[T]int, p T) int {
-	if v, ok := d[p]; ok {
-		return v
-	}
-
-	return math.MaxInt
-}
-
 func ShortestPath[T comparable](source T, neighbours func(T) []Edge[T]) (map[T]int, map[T]T) {
 	dist := map[T]int{source: 0}
 	prev := make(map[T]T)
@@ -109,9 +101,12 @@ func ShortestPath[T comparable](source T, neighbours func(T) []Edge[T]) (map[T]i
 		u := heap.Pop(&pq).(*Item[T]).vertex
 
 		for _, edge := range neighbours(u) {
-			v := edge.To
-			weight := edge.Weight
-			if dist[u]+weight < get(dist, v) {
+			v, weight := edge.To(), edge.Weight()
+			if _, ok := dist[v]; !ok {
+				dist[v] = math.MaxInt
+			}
+
+			if dist[u]+weight < dist[v] {
 				dist[v] = dist[u] + weight
 				heap.Push(&pq, &Item[T]{vertex: v, dist: dist[v]})
 				prev[v] = u
@@ -134,9 +129,12 @@ func AllShortestPaths[T comparable](source T, neighbours func(T) []Edge[T]) (map
 		u := heap.Pop(&pq).(*Item[T]).vertex
 
 		for _, edge := range neighbours(u) {
-			v := edge.To
-			weight := edge.Weight
-			if dist[u]+weight <= get(dist, v) {
+			v, weight := edge.To(), edge.Weight()
+			if _, ok := dist[v]; !ok {
+				dist[v] = math.MaxInt
+			}
+
+			if dist[u]+weight <= dist[v] {
 				dist[v] = dist[u] + weight
 				heap.Push(&pq, &Item[T]{vertex: v, dist: dist[v]})
 				if _, ok := prev[v]; !ok {

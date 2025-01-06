@@ -32,6 +32,11 @@ type direction struct {
 	dx, dy int
 }
 
+type edge struct {
+	to     state
+	weight int
+}
+
 type state struct {
 	x, y      int
 	direction direction
@@ -40,6 +45,14 @@ type state struct {
 type day16 struct {
 	grid       [][]byte
 	start, end state
+}
+
+func (e edge) To() state {
+	return e.to
+}
+
+func (e edge) Weight() int {
+	return e.weight
 }
 
 func readInput(d day.DayInput) day16 {
@@ -126,12 +139,12 @@ func (d day16) neighbours(s state) []grid.Edge[state] {
 	var result []grid.Edge[state]
 
 	if d.scan(s, s.direction) != '#' {
-		result = append(result, grid.Edge[state]{To: s.forward(), Weight: 1})
+		result = append(result, edge{s.forward(), 1})
 	}
 
 	for _, dir := range turns[s.direction] {
 		if d.scan(s, dir) != '#' {
-			result = append(result, grid.Edge[state]{To: s.turn(dir), Weight: 1000})
+			result = append(result, edge{s.turn(dir), 1000})
 		}
 	}
 

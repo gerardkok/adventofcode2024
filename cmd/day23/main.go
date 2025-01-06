@@ -96,9 +96,8 @@ func include(s map[string]struct{}, v string) map[string]struct{} {
 func (d day23) bronKerbosch(R, P, X map[string]struct{}) iter.Seq[map[string]struct{}] {
 	return func(yield func(map[string]struct{}) bool) {
 		if len(P) == 0 && len(X) == 0 {
-			if !yield(R) {
-				return
-			}
+			_ = yield(R)
+			return
 		}
 
 		// stay on safe side, and construct new slice of keys of P, because P will be modified through the loop
